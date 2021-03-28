@@ -1,0 +1,28 @@
+{
+  "name": "antartica",
+  "version": "1.0.0",
+  "description": "restful api endpoints",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "env-cmd -f ./config/dev.env nodemon --legacy-watch index.js",
+    "prod": "env-cmd -f ./config/prod.env pm2 start index.js",
+    "stop": "pm2 stop index",
+    "debug": "nodemon --inspect=0.0.0.0  index.js"
+  },
+  "keywords": [
+    "assignment"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "env-cmd": "^10.1.0",
+    "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
+    "morgan": "^1.10.0",
+    "mysql2": "^2.2.5",
+    "nodemon": "^2.0.7",
+    "sequelize": "^6.6.2"
+  }
+}
