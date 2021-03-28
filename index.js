@@ -14,7 +14,7 @@ db.authenticate()
 
 // imports all the models here 
 require('./models');
-db.sync({ force: true });
+db.sync();
 
 
 const app = express()
@@ -32,6 +32,16 @@ app.get('/', (req, res) => {
 app.use(`/api/${API_VERSION.V1}/users`, userRouter)
 
 // app.use(errorHandler)
+app.use((err, req, res, next) => {
+  console.log(" error ", err.stack)
+  const stack = process.env.NODE_ENV === "development" ? err.stack : undefined
+  res.status(500)
+    .json({
+      success: false,
+      message: "Internal Server Error",
+      stack
+    })
+})
 
 app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`)
