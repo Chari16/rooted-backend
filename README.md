@@ -14,11 +14,11 @@ Create a Restful API for Registration, Login & a getUserList
 
 
 ### Folder Structure
- - config
- - constants
- - controllers
- - db
- - middlewares
- - models
- - routes
- - utils 
+ - config ( All config files with envireonment variables)
+ - constants ( Constants used globally in project )
+ - controllers ( Business logic layer )
+ - db ( Database configuration )
+ - middlewares ( Middlewares & intercepters )
+ - models ( Database object models )
+ - routes ( Api routes )
+ - utils ( Utilities )
