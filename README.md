@@ -13,7 +13,12 @@ Create a Restful API for Registration, Login & a getUserList
 
 
 
-### Frameworks used: 
-1. `ExpressJS`: For restful API development. You will make use of router and middlewares
-2. `Sequelize (MYSQL)`: For persistence (model) layer
-3. `Postman`: GUI for making API request.
+### Folder Structure
+ - config
+ - constants
+ - controllers
+ - db
+ - middlewares
+ - models
+ - routes
+ - utils 
