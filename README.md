@@ -48,8 +48,11 @@ localhost:PORT_NO/api/v1/
 
 3. `GET /users/search`: This api will be use to get USER list. This API will have authentication policy applied i.e. It will require the client to provide authentication token which can be obtained via login.This api also has pagination and sorting feature.
 
-    Query Params: 
+    Query Params:
+
         For sorting: ?sortBy=first_name:DESC
+
         For pagination: ?page=1&size=5
+        
         For search: ?first_name=Bhavesh&last_name&Chari
 
