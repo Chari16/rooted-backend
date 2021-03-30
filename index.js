@@ -1,6 +1,5 @@
 const express = require('express')
 const middlewares = require('./middlewares/global')
-// const { errorHandler } = require('./middlewares/errorHandler');
 const userRouter = require('./routes/user');
 const { API_VERSION } = require('./constants')
 
@@ -23,15 +22,16 @@ app.use(express.urlencoded({ extended: true }))
 app.use(express.json())
 app.use(middlewares)
 
-const port = 5000
+const port = process.env.PORT || 5000
 
 app.get('/', (req, res) => {
   res.send('Server is up')
 })
 
+// user routes
 app.use(`/api/${API_VERSION.V1}/users`, userRouter)
 
-// app.use(errorHandler)
+// error handler
 app.use((err, req, res, next) => {
   console.log(" error ", err.stack)
   const stack = process.env.NODE_ENV === "development" ? err.stack : undefined
