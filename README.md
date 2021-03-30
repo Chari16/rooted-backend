@@ -56,3 +56,9 @@ localhost:PORT_NO/api/v1/
         
         For search: ?first_name=Bhavesh&last_name&Chari
 
+
+### Hosting Information
+
+The application is hosted on cloud platform heroko.com
+
+BASE_URL: `https://antarctica-codetest.herokuapp.com/api/v1/`
