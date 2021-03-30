@@ -2,6 +2,8 @@ const User = require('../models/user')
 const Employee = require('../models/employee')
 const Sequelize = require('sequelize')
 const Op = Sequelize.Op;
+const bcrypt = require('bcryptjs')
+const { generateJwtToken } = require('../utils/authorization')
 
 
 register = async(req, res, next) => {
@@ -84,7 +86,46 @@ getPagingData = (data, page, limit) => {
     return { totalItems, employees, totalPages, currentPage };
 };
 
+login = async(req, res, next) => {
+    try{
+        const { email, password } = req.body;
+
+        // check whether email id exists or not
+        const user = await User.findOne({ where: { email } })
+        if(!user) {
+            res.status(403)
+                .json({
+                    success: false,
+                    message: 'Oops! Either Email or Password is incorrect.'
+                })
+        }
+
+        // check whether the new hashed password matches with original hashed password
+        const isMatch = await bcrypt.compare(password, user.password)
+        if(!isMatch) {
+            res.status(403)
+                .json({
+                    success: false,
+                    message: 'Oops! Either Email or Password is incorrect.'
+                })
+        }
+
+        // generate token
+        const token = await generateJwtToken(user)
+
+        res.status(200)
+            .json({
+                success: true,
+                data: { token }
+            })
+    }
+    catch(e){
+        next(e)
+    }
+}
+
 module.exports = {
     register,
-    search
+    search,
+    login
 }
