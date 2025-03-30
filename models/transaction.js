@@ -11,6 +11,7 @@ const Order = db.define(
     orderId: {
       type: Sequelize.STRING,
       allowNull: false,
+			unique: true
     },
     status: {
       type: Sequelize.STRING,
@@ -32,6 +33,10 @@ const Order = db.define(
 			type: Sequelize.FLOAT,
 			required: true,
 		},
+    razorpayPaymentId: {
+      type: Sequelize.STRING,
+      allowNull: true,
+    }
   },
   {
     freezeTableName: true,

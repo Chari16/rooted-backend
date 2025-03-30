@@ -94,6 +94,10 @@ paymentSuccess = async (req, res, next) => {
 
     // THE PAYMENT IS LEGIT & VERIFIED
     // YOU CAN SAVE THE DETAILS IN YOUR DATABASE IF YOU WANT
+    await Transaction.update(
+      { status: "completed", razorpayPaymentId },
+      { where: { orderId: orderCreationId } }
+    );
 
     res.json({
       msg: "success",
