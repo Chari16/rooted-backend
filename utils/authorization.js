@@ -9,8 +9,8 @@ const config = require('../config')
 
 const generateJwtToken = async (user) => {
     const { secrets, } = config;
-    const { id, empId  } = user;
-	const token = jwt.sign({ id, empId }, secrets.jwt, {
+    const { id } = user;
+	const token = jwt.sign({ id }, secrets.jwt, {
 		expiresIn: secrets.jwtExp,
 	});
 	return token;
@@ -54,7 +54,6 @@ const verifyToken = (token) =>
 const serializeUser = user => {
     return {
         id : user.id,
-        empId: user.empId,
     }
 }
 

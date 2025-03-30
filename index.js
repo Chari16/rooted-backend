@@ -1,6 +1,16 @@
 const express = require('express')
 const middlewares = require('./middlewares/global')
 const userRouter = require('./routes/user');
+const cuisineRouter = require('./routes/cuisine');
+const boxRouter = require('./routes/box');
+const subscriptionRouter = require('./routes/subscription');
+const customerRouter = require('./routes/customer');
+const orderRouter = require('./routes/order');
+const couponRouter = require('./routes/coupons');
+const holidayRouter = require('./routes/holiday');
+const pincodeRouter = require('./routes/pincode');
+const paymentRouter = require('./routes/payment');
+const webhook = require('./routes/webhook');
 const { API_VERSION } = require('./constants')
 
 
@@ -30,6 +40,17 @@ app.get('/', (req, res) => {
 
 // user routes
 app.use(`/api/${API_VERSION.V1}/users`, userRouter)
+app.use(`/api/${API_VERSION.V1}/cuisines`, cuisineRouter)
+app.use(`/api/${API_VERSION.V1}/boxes`, boxRouter)
+app.use(`/api/${API_VERSION.V1}/subscriptions`, subscriptionRouter)
+app.use(`/api/${API_VERSION.V1}/customers`, customerRouter)
+app.use(`/api/${API_VERSION.V1}/orders`, orderRouter)
+app.use(`/api/${API_VERSION.V1}/coupons`, couponRouter)
+app.use(`/api/${API_VERSION.V1}/holidays`, holidayRouter)
+app.use(`/api/${API_VERSION.V1}/pincodes`, pincodeRouter)
+app.use(`/api/${API_VERSION.V1}/payments`, paymentRouter)
+app.use(`/webhook`, webhook)
+
 
 // error handler
 app.use((err, req, res, next) => {
