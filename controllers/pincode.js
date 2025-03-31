@@ -37,11 +37,11 @@ list = async (req, res, next) => {
   const { limit, offset } = getPagination(page, size);
   console.log(" limit ", limit);
   console.log("offset", offset)
-	const mealBoxes = await MealBox.findAll({ limit, offset });
+	const pincodes = await MealBox.findAll({ limit, offset });
 	const totalBoxes = await MealBox.count();
 	res.status(200).json({
 		success: true,
-    mealBoxes,
+    pincodes,
     count: totalBoxes,
     currentPage: page ? +page : 0,
     totalPages: Math.ceil(totalBoxes / limit),

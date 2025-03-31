@@ -1,10 +1,8 @@
 const Sequelize = require("sequelize");
-const Customer = require("./customer");
 const db = require("../db/sequelize");
-const MealBox = require("./mealBox");
 
-const Subscription = db.define(
-  "subscriptions",
+const TempSubscription = db.define(
+  "temp_subscriptions",
   {
     amount: { //final amount
       type: Sequelize.FLOAT,
@@ -53,7 +51,7 @@ const Subscription = db.define(
 		},
 		orderId: {
 			type: Sequelize.STRING,
-			required: true,
+			required: false,
 		}
   },
   {
@@ -61,9 +59,4 @@ const Subscription = db.define(
   }
 );
 
-Customer.hasMany(Subscription, { foreignKey: "customerId", onDelete: "CASCADE" });
-Subscription.belongsTo(Customer, { foreignKey: "customerId" });
-MealBox.hasMany(Subscription, { foreignKey: "boxId", onDelete: "CASCADE" });
-Subscription.belongsTo(MealBox, { foreignKey: "boxId", as: "box" });
-
-module.exports = Subscription;
+module.exports = TempSubscription;

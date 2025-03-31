@@ -1,7 +1,7 @@
 const config = {
     secrets: {
         jwt: "ITSMYSECRET",
-        jwtExp: '1d'
+        jwtExp: '5d'
     },
     V1: 'v1'
 }

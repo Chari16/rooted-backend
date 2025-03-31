@@ -12,6 +12,7 @@ const SubscriptionMap = require("./subscriptionMap");
 const Order = require("./order");
 const Holiday = require("./holiday");
 const Pincode = require("./pincode");
+const TempSubscription = require("./tempSubscription");
 
 module.exports = {
   User,
@@ -26,5 +27,6 @@ module.exports = {
   SubscriptionMap,
   Order,
   Holiday,
-  Pincode
+  Pincode,
+  TempSubscription
 };

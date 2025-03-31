@@ -193,10 +193,6 @@ buySubscription = async (req, res, next) => {
             );
             console.log(" isHoliday ", isHoliday, startDate);
             console.log(" isPublicHoliday ", isPublicHoliday(startDate));
-            // isHoliday = false  isPublicHoliday = false -> true
-            // isHoliday = true  isPublicHoliday = false -> 
-            // isHoliday = false  isPublicHoliday = true
-            // isHoliday = true  isPublicHoliday = true
             if (!isHoliday && !isPublicHoliday(startDate)) {
               console.log(" currentNode ", currentNode);
               const currentChoice = choicesAvailable ? list.getCurrentValue(currentNode) : null;

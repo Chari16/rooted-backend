@@ -5,6 +5,7 @@ const Customer = require("../models/customer");
 const { SMS_API_URL } = require("../constants");
 const { verify } = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
+const { generateJwtToken } = require("../utils/authorization");
 
 // to get pagination information
 getPagination = (page, size) => {
@@ -303,10 +304,15 @@ verifyOtp = async (req, res, next) => {
     // format response
     const customerData = customer.toJSON();
     delete customerData.otp;
+
+    // generate jwt token
+    const token = await generateJwtToken(customer);
+
     res.status(200).json({
       success: true,
       message: "OTP verified successfully",
       data: customerData,
+      token: token,
     });
   } catch (e) {
     next(e);

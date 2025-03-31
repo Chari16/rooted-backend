@@ -239,6 +239,7 @@ adminLogin = async (req, res, next) => {
       token,
       firstName: user.firstName,
       lastName: user.lastName,
+      email: user.email,
       role: user.role
     }); 
   } catch (e) {

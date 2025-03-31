@@ -36,7 +36,15 @@ const Order = db.define(
     razorpayPaymentId: {
       type: Sequelize.STRING,
       allowNull: true,
-    }
+    },
+    walletAdjusted: {
+      type: Sequelize.FLOAT,
+      required: false,
+    },
+    couponCode: {
+      type: Sequelize.STRING,
+      required: false,
+    },
   },
   {
     freezeTableName: true,

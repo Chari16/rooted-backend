@@ -70,8 +70,8 @@ updateCouponDetails = async (req, res, next) => {
       });
     }
     console.log(" coupon ", coupon);
-    const { status, value, code } = req.body
-    await Coupon.update({ status, value, code }, { where: { id: id } });
+    const { status, value, code, validFrom, validTo } = req.body
+    await Coupon.update({ status, value, code, validFrom, validTo }, { where: { id: id } });
     res.status(200).json({
       success: true,
       message: "Coupon updated successfully",
@@ -81,9 +81,61 @@ updateCouponDetails = async (req, res, next) => {
   }
 };
 
+applyCoupon = async (req, res, next) => {
+  try {
+    const { code, value } = req.body;
+    const coupon = await Coupon.findOne({ where: { code } });
+
+    if (!coupon) {
+      return res.status(404).json({
+        success: false,
+        message: "Coupon not found",
+      });
+    }
+    console.log(" coupon from ", coupon.validFrom);
+    console.log(" coupon to ", coupon.validTo);
+    console.log(" currentr  date ", new Date());
+    let discountedAmount = 0;
+    let discountValue = 0
+    if (coupon.validFrom < new Date() && coupon.validTo > new Date()) {
+      // compute the discount
+      if (coupon.discountType === "fixed") {
+        discountedAmount = value - coupon.value;
+        discountValue = coupon.value;
+      }
+      if (coupon.discountType === "percentage") {
+        discountedAmount = value - (value * coupon.value) / 100;
+        discountValue = (value * coupon.value) / 100;
+      }
+    }
+    else {
+      return res.status(400).json({
+        success: false,
+        message: "Coupon is not valid",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Coupon applied successfully",
+      data: {
+        code: coupon.code,
+        discountedAmount: discountedAmount,
+        discountValue: discountValue,
+        validFrom: coupon.validFrom,
+        validTo: coupon.validTo,
+        couponId: coupon.id,
+      },
+    });
+  } catch (e) {
+    next(e);
+  }
+}
+
 module.exports = {
   create,
   list,
   getCouponDetails,
   updateCouponDetails,
+  applyCoupon
 };

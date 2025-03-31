@@ -1,12 +1,13 @@
 const express = require('express')
 const subscriptionController = require('../controllers/subscription');
+const auth = require('../middlewares/auth');
  
 const router = express.Router()
 
-router.post('/buy', subscriptionController.buySubscription)
-router.get('/list', subscriptionController.list)
-router.get('/list/:userId', subscriptionController.list)
-router.get('/:id', subscriptionController.getBoxDetails)
-router.put('/:id', subscriptionController.updateBoxDetails)
+router.post('/buy', auth, subscriptionController.buySubscription)
+router.get('/list', auth, subscriptionController.list)
+router.get('/list/:userId', auth, subscriptionController.list)
+router.get('/:id', auth, subscriptionController.getBoxDetails)
+router.put('/:id', auth, subscriptionController.updateBoxDetails)
 
 module.exports = router;

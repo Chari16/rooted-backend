@@ -1,4 +1,4 @@
-const MealBox = require("../models/holiday");
+const Holiday = require("../models/holiday");
 const Sequelize = require("sequelize");
 
 // to get pagination information
@@ -19,7 +19,7 @@ getPagingData = (data, page, limit) => {
 
 create = async (req, res, next) => {
   try {
-    await MealBox.create(req.body);
+    await Holiday.create(req.body);
     res.status(200).json({
       success: true,
       message: "Holiday created successfully",
@@ -37,11 +37,11 @@ list = async (req, res, next) => {
   const { limit, offset } = getPagination(page, size);
   console.log(" limit ", limit);
   console.log("offset", offset)
-	const mealBoxes = await MealBox.findAll({ limit, offset });
-	const totalBoxes = await MealBox.count();
+	const holidays = await Holiday.findAll({ limit, offset });
+	const totalBoxes = await Holiday.count();
 	res.status(200).json({
 		success: true,
-    mealBoxes,
+    holidays,
     count: totalBoxes,
     currentPage: page ? +page : 0,
     totalPages: Math.ceil(totalBoxes / limit),
@@ -51,8 +51,8 @@ list = async (req, res, next) => {
 getBoxDetails = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const mealBox = await MealBox.findOne({ where: { id } });
-    if (!mealBox) {
+    const holiday = await Holiday.findOne({ where: { id } });
+    if (!holiday) {
       res.status(404).json({
         success: false,
         message: "Meal box not found",
@@ -60,7 +60,7 @@ getBoxDetails = async (req, res, next) => {
     }
     res.status(200).json({
       success: true,
-      data: mealBox,
+      data: holiday,
     });
   } catch (e) {
     next(e);
@@ -73,15 +73,15 @@ updateBoxDetails = async (req, res, next) => {
     console.log(" req body ", req.body)
     const { email, password, firstName, lastName, phoneNumber, role, status } =
       req.body;
-    const mealBox = await MealBox.findOne({ where: { id } });
-    if (!mealBox) {
+    const holiday = await Holiday.findOne({ where: { id } });
+    if (!holiday) {
       return res.status(404).json({
         success: false,
         message: "Meal box not found",
       });
     }
-    console.log(" user ", mealBox);
-    await MealBox.update(req.body, { where: { id: id } });
+    console.log(" user ", holiday);
+    await Holiday.update(req.body, { where: { id: id } });
     res.status(200).json({
       success: true,
       message: "Meal box updated successfully",

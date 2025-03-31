@@ -7,5 +7,6 @@ router.post('/create', couponController.create)
 router.get('/list', couponController.list)
 router.get('/:id', couponController.getCouponDetails)
 router.put('/:id', couponController.updateCouponDetails)
+router.post('/apply', couponController.applyCoupon)
 
 module.exports = router;

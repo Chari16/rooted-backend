@@ -6,9 +6,9 @@ const calculateRefund = (type, amount) => {
 		return part
   }
   if (type === "monthly") {
-		// total days 30
+		// total days 26
 		// calculate refund by dividing total by 30 days
-    const part = amount / 30;
+    const part = amount / 26;
 		return part
   }
   return total - refund;

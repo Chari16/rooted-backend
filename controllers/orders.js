@@ -142,6 +142,49 @@ getKitchenSchedule = async (req, res, next) => {
       currentDate.setDate(currentDate.getDate() + 1); // Increment by 1 day
     }
 
+    // Fetch orders grouped by orderDate and dietType
+    const ordersGroupedByDietType = await Order.findAll({
+      attributes: [
+        "orderDate", // Include orderDate in the result
+        [Sequelize.col("subscription.dietType"), "dietType"], // Include dietType from Subscription
+        [Sequelize.fn("COUNT", Sequelize.col("Orders.id")), "itemCount"], // Count the number of items
+      ],
+      where: {
+        orderDate: {
+          [Op.between]: [new Date(startDate), new Date(endDate)], // Filter by date range
+        },
+      },
+      group: ["orderDate", "subscription.dietType"], // Group by orderDate and dietType
+      include: [
+        {
+          model: Subscription,
+          as: "subscription", // Include the Subscription model
+          attributes: [], // Exclude other fields from Subscription
+        },
+      ],
+    });
+
+    // Initialize a map to store veg and non-veg counts for each date
+    const dietTypeCounts = {};
+    const dietTypes = [{name: 'Veg', id: 'veg'}, {name: 'Non Veg', id: 'non_veg'}];
+    dietTypes.forEach((dietType) => {
+      dietTypeCounts[dietType.id] = { name: dietType.name, dates: {} }; 
+      allDates.forEach((date) => {
+        console.log(" diet tYpe ", dietType)
+        dietTypeCounts[dietType.id].dates[date] =  0; // Initialize counts for each date
+      });
+    })
+
+    // Populate the dietTypeCounts map with data from the query
+    ordersGroupedByDietType.forEach((order) => {
+      const orderDate = new Date(order.orderDate).toISOString().split("T")[0]; // Format as YYYY-MM-DD
+      const dietType = order.dataValues.dietType; // Map dietType to veg or nonVeg
+      const dietCount = order.dataValues.itemCount; // Get the count for the diet type
+      if(dietTypeCounts[dietType]) {
+        dietTypeCounts[dietType].dates[orderDate] = dietCount; // Update the count for the date
+      }
+    });
+
     // Fetch orders grouped by orderDate and cuisineId
     const ordersGroupedByDate = await Order.findAll({
       attributes: [
@@ -164,53 +207,47 @@ getKitchenSchedule = async (req, res, next) => {
       ],
     });
 
-    const ordersGroupedByBox = await Order.findAll({ 
+    // Fetch orders grouped by orderDate and boxId
+    const ordersGroupedByMealBox = await Order.findAll({
       attributes: [
+        "orderDate", // Include orderDate in the result
         "boxId", // Include boxId in the result
-        [Sequelize.fn("COUNT", Sequelize.col("Orders.id")), "totalOrders"], // Count the number of orders
+        [Sequelize.fn("COUNT", Sequelize.col("Orders.id")), "boxCount"], // Count the number of orders for each box
       ],
       where: {
         orderDate: {
           [Op.between]: [new Date(startDate), new Date(endDate)], // Filter by date range
         },
       },
-      group: ["boxId"], // Group by boxId
+      group: ["orderDate", "boxId"], // Group by orderDate and boxId
       include: [
-        // {
-        //   model: Subscription,
-        //   as: "subscription", // Include the Cuisine model for additional details
-        //   attributes: ["dietType"], // Include only the name of the cuisine
-        // },
         {
           model: MealBox,
-          as: "box", // Include the Cuisine model for additional details
-          attributes: ["name"], // Include only the name of the cuisine
+          as: "box", // Include the MealBox model
+          attributes: ["name"], // Include the name of the meal box
         },
-      ]
-    })
+      ],
+    });
 
-    const ordersGroupedByDiet = await Order.findAll({
-      attributes: [
-        "id",
-        "subscriptionId", // Include subscriptionId in the result
-      ], 
-      where: {
-        orderDate: {
-          [Op.between]: [new Date(startDate), new Date(endDate)], // Filter by date range
-        },
-      },
-      include: [
-        {
-          model: Subscription,
-          as: "subscription", 
-          attributes: ["dietType"],
-        },
-      ]
-    })
+    // Initialize all cuisines with all dates set to 0
+    const mealBoxCounts = {};
+    const mealBoxes = await MealBox.findAll({ attributes: ["id", "name"] });
+    mealBoxes.forEach((box) => {
+      mealBoxCounts[box.id] = { boxId: box.id, boxName: box.name, dates: {} };
+      allDates.forEach((date) => {
+        mealBoxCounts[box.id].dates[date] = 0; // Initialize all dates with 0
+      });
+    });
 
-    const vegOrders = ordersGroupedByDiet.filter(order => order.subscription.dietType === "veg").length;
-    const nonVegOrders = ordersGroupedByDiet.filter(order => order.subscription.dietType === "non_veg").length;
-    const totalOrders = ordersGroupedByDiet.length;
+    // Populate the mealBoxCounts map with data from the query
+    ordersGroupedByMealBox.forEach((order) => {
+      const orderDate = new Date(order.orderDate).toISOString().split("T")[0]; // Format as YYYY-MM-DD
+      const boxId = order.boxId;
+      const boxCount = order.dataValues.boxCount; // Get the count for the box
+      if (mealBoxCounts[boxId]) {
+        mealBoxCounts[boxId].dates[orderDate] = boxCount; // Update the count for the date
+      }
+    })
 
     // Format the response
     const schedule = {};
@@ -234,6 +271,18 @@ getKitchenSchedule = async (req, res, next) => {
       }
     });
 
+    const totalOrders = {};
+    allDates.forEach((date) => {
+      const dateKey = new Date(date).toISOString().split("T")[0]; // Format as YYYY-MM-DD
+      totalOrders[dateKey] = 0; // Initialize total orders for each date
+    });
+    ordersGroupedByDate.forEach((order) => {
+      const orderDate = new Date(order.orderDate).toISOString().split("T")[0]; // Format as YYYY-MM-DD
+      const orderCount = order.dataValues.orderCount;
+      totalOrders[orderDate] += orderCount; // Update the total orders for the date
+    });
+
+
     // Convert the schedule object to an array
     const formattedSchedule = Object.values(schedule);
 
@@ -241,10 +290,9 @@ getKitchenSchedule = async (req, res, next) => {
       success: true,
       schedule: formattedSchedule,
       dates: allDates,
-      orderByBox: ordersGroupedByBox,
-      vegOrders: vegOrders,
-      nonVegOrders: nonVegOrders,
-      totalOrders
+      orderByBox: Object.values(mealBoxCounts),
+      totalOrders,
+      dietTypeCounts: Object.values(dietTypeCounts),
     });
   } catch (e) {
     console.error("Error in getKitchenSchedule:", e);
