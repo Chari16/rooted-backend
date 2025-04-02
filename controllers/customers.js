@@ -217,11 +217,11 @@ login = async (req, res, next) => {
        },
     }
     try {
-      // const resp = await axios.post(SMS_API_URL, data, options);
-      // console.log(" resp ", resp)
-      // res.status(200).json({
-      //   message: "OTP sent successfully"
-      // })
+      const resp = await axios.post(SMS_API_URL, data, options);
+      console.log(" resp ", resp)
+      res.status(200).json({
+        message: "OTP sent successfully"
+      })
     }
     catch (apiError) {
       console.error("Error calling SMS API:", apiError.message);
