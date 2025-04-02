@@ -247,10 +247,35 @@ googleLogin = async (req, res, next) => {
 
     console.log(" ticket ", ticket.getPayload());
     // generate jwt token
-
+    const { email, sub, name } = ticket.getPayload();
+    const customer = await Customer.findOne({
+      where: {
+        email: email,
+        googleId: sub,
+      },
+    });
+    if (!customer) {
+      // create a customer with name and email
+      const newCustomer = await Customer.create({
+        name,
+        email,
+        googleId: sub,
+        status: "active",
+        wallet: 0,
+      });
+      const token = await generateJwtToken(newCustomer);
+      res.status(200).json({
+        success: true,
+        message: "Google login success with new customer",
+        token: token,
+      });
+    }
+    // generate jwt token
+    const jwtToken = await generateJwtToken(customer);
     res.status(200).json({
       success: true,
-      message: "Google login success"
+      message: "Google login success",
+      token: jwtToken,
     });
   } catch (e) {
     next(e);
@@ -266,10 +291,35 @@ facebookLogin = async (req, res, next) => {
     console.log(" fb response ", fbResponse.data);
     const { id, name, email, picture } = fbResponse.data;
     // generate jwt token
-    
+    const customer = await Customer.findOne({
+      where: {
+        email: email,
+        fbId: id,
+      },
+    });
+    if (!customer) {
+      // create a customer with name and email
+      const newCustomer = await Customer.create({
+        name,
+        email,
+        fbId: id,
+        status: "active",
+        wallet: 0,
+      });
+      const token = await generateJwtToken(newCustomer);
+      res.status(200).json({
+        success: true,
+        message: "Facebook login success with new customer",
+        token: token,
+      });
+    }
+    // generate jwt token
+    const token = await generateJwtToken(customer);
     res.status(200).json({
-      message: "Facebook login success"
-    })
+      success: true,
+      message: "Facebook login success",
+      token: token,
+    });
   } catch (e) {
     next(e);
   }
