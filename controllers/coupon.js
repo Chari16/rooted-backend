@@ -83,8 +83,8 @@ updateCouponDetails = async (req, res, next) => {
 
 applyCoupon = async (req, res, next) => {
   try {
-    const { code, value } = req.body;
-    const coupon = await Coupon.findOne({ where: { code } });
+    const { code, value, boxId, subscriptionType } = req.body;
+    const coupon = await Coupon.findOne({ where: { code, boxId, subscriptionType } });
 
     if (!coupon) {
       return res.status(404).json({

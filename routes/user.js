@@ -5,7 +5,7 @@ const auth = require('../middlewares/auth');
 const router = express.Router()
 
 router.post('/create', userController.create)
-router.get('/list', userController.list)
+router.get('/list', auth, userController.list)
 router.delete('/:id', userController.deleteUser)
 router.get('/:id', userController.getUserDetails)
 router.put('/:id', userController.updateUserDetails)

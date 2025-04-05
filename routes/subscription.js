@@ -9,5 +9,6 @@ router.get('/list', auth, subscriptionController.list)
 router.get('/list/:userId', auth, subscriptionController.list)
 router.get('/:id', auth, subscriptionController.getBoxDetails)
 router.put('/:id', auth, subscriptionController.updateBoxDetails)
+router.get('/active/:id', subscriptionController.getActiveSubscription)
 
 module.exports = router;

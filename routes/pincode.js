@@ -8,5 +8,6 @@ router.get('/list', pincodeController.list)
 router.get('/check-availability', pincodeController.checkAvailability)
 router.get('/:id', pincodeController.getBoxDetails)
 router.put('/:id', pincodeController.updateBoxDetails)
+router.delete('/:id', pincodeController.deletePincode)
 
 module.exports = router;

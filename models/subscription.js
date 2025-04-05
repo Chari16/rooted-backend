@@ -54,7 +54,7 @@ const Subscription = db.define(
 		orderId: {
 			type: Sequelize.STRING,
 			required: true,
-		}
+		},
   },
   {
     freezeTableName: true,

@@ -37,8 +37,8 @@ list = async (req, res, next) => {
   const { limit, offset } = getPagination(page, size);
   console.log(" limit ", limit);
   console.log("offset", offset)
-	const holidays = await Holiday.findAll({ limit, offset });
-	const totalBoxes = await Holiday.count();
+	const holidays = await Holiday.findAll({ where: {  isDeleted: false }, limit, offset});
+	const totalBoxes = await Holiday.count({ where: { isDeleted: false } });
 	res.status(200).json({
 		success: true,
     holidays,
@@ -55,7 +55,7 @@ getBoxDetails = async (req, res, next) => {
     if (!holiday) {
       res.status(404).json({
         success: false,
-        message: "Meal box not found",
+        message: "Holiday not found",
       });
     }
     res.status(200).json({
@@ -71,20 +71,39 @@ updateBoxDetails = async (req, res, next) => {
   try {
     const { id } = req.params;
     console.log(" req body ", req.body)
-    const { email, password, firstName, lastName, phoneNumber, role, status } =
-      req.body;
     const holiday = await Holiday.findOne({ where: { id } });
     if (!holiday) {
       return res.status(404).json({
         success: false,
-        message: "Meal box not found",
+        message: "Holiday not found",
       });
     }
     console.log(" user ", holiday);
     await Holiday.update(req.body, { where: { id: id } });
     res.status(200).json({
       success: true,
-      message: "Meal box updated successfully",
+      message: "Holiday updated successfully",
+    });
+  }
+  catch (e) {
+    next(e);
+  }
+}
+
+deleteHoliday = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const holiday = await Holiday.findOne({ where: { id } });
+    if (!holiday) {
+      return res.status(404).json({
+        success: false,
+        message: "Holiday not found",
+      });
+    }
+    await Holiday.update({ isDeleted: true }, { where: { id: id } });
+    res.status(200).json({
+      success: true,
+      message: "Holiday deleted successfully",
     });
   }
   catch (e) {
@@ -96,5 +115,6 @@ module.exports = {
   create,
 	list,
   getBoxDetails,
-  updateBoxDetails
+  updateBoxDetails,
+  deleteHoliday
 }

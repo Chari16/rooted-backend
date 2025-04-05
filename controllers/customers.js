@@ -70,7 +70,7 @@ getCustomerDetails = async (req, res, next) => {
     if (!customer) {
       res.status(404).json({
         success: false,
-        message: "User not found",
+        message: "Customer not found",
       });
     }
 
@@ -83,34 +83,25 @@ getCustomerDetails = async (req, res, next) => {
   }
 };
 
-updateUserDetails = async (req, res, next) => {
+updateCustomerDetails = async (req, res, next) => {
   try {
     const { id } = req.params;
     console.log(" req body ", req.body);
-    const { email, password, firstName, lastName, phoneNumber, role, status } =
-      req.body;
-    const user = await User.findOne({ where: { id } });
+    const user = await Customer.findOne({ where: { id } });
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found",
+        message: "Customer not found",
       });
     }
     console.log(" user ", user);
-    await User.update(
-      {
-        email,
-        // password,
-        firstName,
-        lastName,
-        role,
-        status,
-      },
+    await Customer.update(
+      req.body,
       { where: { id: id } }
     );
     res.status(200).json({
       success: true,
-      message: "User updated successfully",
+      message: "Customer updated successfully",
     });
   } catch (e) {
     next(e);
@@ -376,7 +367,7 @@ module.exports = {
   create,
   list,
   getCustomerDetails,
-  updateUserDetails,
+  updateCustomerDetails,
   login,
   googleLogin,
   facebookLogin,

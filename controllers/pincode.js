@@ -37,8 +37,8 @@ list = async (req, res, next) => {
   const { limit, offset } = getPagination(page, size);
   console.log(" limit ", limit);
   console.log("offset", offset)
-	const pincodes = await MealBox.findAll({ limit, offset });
-	const totalBoxes = await MealBox.count();
+	const pincodes = await MealBox.findAll({ where: { isDeleted: false }, limit, offset });
+	const totalBoxes = await MealBox.count({ where: { isDeleted: false } });
 	res.status(200).json({
 		success: true,
     pincodes,
@@ -95,7 +95,7 @@ updateBoxDetails = async (req, res, next) => {
 checkAvailability = async (req, res, next) => {	
 		try {
 		const { pincode } = req.query;
-		const pinCodeFound = await MealBox.findOne({ where: { code: pincode } });
+		const pinCodeFound = await MealBox.findOne({ where: { code: pincode, isDeleted: false } });
 		if (!pinCodeFound) {
 			res.status(404).json({
 				success: false,
@@ -112,10 +112,32 @@ checkAvailability = async (req, res, next) => {
 	}			
 }
 
+deletePincode = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const mealBox = await MealBox.findOne({ where: { id } });
+    if (!mealBox) {
+      return res.status(404).json({
+        success: false,
+        message: "Pincode not found",
+      });
+    }
+    await MealBox.update({ isDeleted: true }, { where: { id: id } });
+    res.status(200).json({
+      success: true,
+      message: "Pincode deleted successfully",
+    });
+  }
+  catch (e) {
+    next(e);
+  }
+}
+
 module.exports = {
   create,
 	list,
   getBoxDetails,
   updateBoxDetails,
-	checkAvailability
+	checkAvailability,
+  deletePincode
 }

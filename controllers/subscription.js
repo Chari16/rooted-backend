@@ -44,12 +44,17 @@ create = async (req, res, next) => {
 };
 
 list = async (req, res, next) => {
+  console.log(" req params ", req.params);
   const { page, size } = req.query;
   console.log(" page ", page, size);
   const { limit, offset } = getPagination(page, size);
   console.log(" limit ", limit);
   console.log("offset", offset);
-  const subscriptions = await Subscription.findAll({ limit, offset,
+  const subscriptions = await Subscription.findAll({
+    where: {
+      customerId: req.params.userId
+    },
+    limit, offset,
     include: [
       {
         model: MealBox, 
@@ -358,11 +363,21 @@ getUserSubscriptions = async (req, res, next) => {
   });
 };
 
+getActiveSubscription = async (req, res, next) => {
+  const { id } = req.params;
+  const subscription = await Subscription.findOne({ where: { customerId: id, status: 'active' }});
+  res.status(200).json({
+    success: true,
+    subscription
+  });
+};
+
 module.exports = {
   create,
   list,
   getBoxDetails,
   updateBoxDetails,
   buySubscription,
-  getUserSubscriptions
+  getUserSubscriptions,
+  getActiveSubscription
 };

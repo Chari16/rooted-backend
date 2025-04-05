@@ -163,8 +163,8 @@ paymentSuccess = async (req, res, next) => {
       choicesAvailable = true;
     }
     console.log(" list ", list);
-    const subStartDate = new Date(req.body.startDate);
-    const subEndDate = new Date(req.body.endDate);
+    const subStartDate = new Date(subscription.startDate);
+    const subEndDate = new Date(subscription.endDate);
     let schedule = [];
     let weekends = [];
 
