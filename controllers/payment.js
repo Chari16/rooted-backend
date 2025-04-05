@@ -44,15 +44,6 @@ list = async (req, res, next) => {
 
 createOrder = async (req, res, next) => {
   try {
-    const instance = new Razorpay({
-      key_id: "rzp_test_wX9is0g9eug5V3",
-      key_secret: "SeBUQOo8QEKEY75gqH36NX5E",
-    });
-;
-    const customer = await Customer.findOne({
-      where: { id: req.body.customerId },
-    });
-
     const { amount, gst, shippingAmount, discount, customerId,
       subscriptionType,
       boxId,
@@ -67,11 +58,27 @@ createOrder = async (req, res, next) => {
       walletAmount,
       couponCode
      } = req.body;
-     if(walletAmount) {
-      if(walletAmount > 0) {
-        await Customer.update({ wallet: customer.wallet - walletAmount }, { where: { id: customerId } });
-      }
-     }
+
+    const subscription = await Subscription.findOne({
+      where: { customerId: customerId },
+      order: [["createdAt", "DESC"]], // Order by createdAt in descending order
+    });
+    // check if endDate is greater than current date
+    const currentDate = new Date();
+    if (subscription && subscription.endDate < currentDate) {
+      return res.status(200).json({
+        success: true,
+        status: 'expired',
+        message: "Subscription expired",
+        subscription,
+      });
+    }
+    
+    const instance = new Razorpay({
+      key_id: "rzp_test_wX9is0g9eug5V3",
+      key_secret: "SeBUQOo8QEKEY75gqH36NX5E",
+    });
+
     const order = await instance.orders.create({ amount, currency: "INR" });
     await TempSubscription.create({
       amount,
@@ -137,6 +144,14 @@ paymentSuccess = async (req, res, next) => {
       { status: "completed", razorpayPaymentId },
       { where: { orderId: orderCreationId } }
     );
+    const transaction = await Transaction.findOne({
+      where: { orderId: orderCreationId },
+    });
+
+    const customer = await Customer.findOne({
+      where: { id: transaction.customerId },
+    });
+
     await TempSubscription.update(
       { orderId: orderCreationId, status: 'active' },
       { where: { orderId: orderCreationId } }
@@ -147,10 +162,12 @@ paymentSuccess = async (req, res, next) => {
     console.log(" tempSub ", tempSub);
 
     const {amount, weekendType, status, boxId, itemNames, subscriptionType, dietType, startDate, endDate, customerId, itemCode, orderId  } = tempSub
-    const subscription = await Subscription.create({ amount, weekendType, status, boxId, itemNames, subscriptionType, dietType, startDate, endDate, customerId, itemCode, orderId })
+    const subscription = await Subscription.create({ amount, weekendType, status, boxId, itemNames, subscriptionType, dietType, startDate, endDate, customerId, itemCode, orderId, cuisineChoice: tempSub.cuisineChoice });
+
+    await Customer.update({ wallet: customer.wallet - transaction.walletAdjusted }, { where: { id: transaction.customerId } });
 
     // trigger the buy subscription flow here
-    const { cuisineChoice } = req.body;
+    const cuisineChoice = tempSub.cuisineChoice;
     let choicesAvailable = false;
     console.log(" cuisineChoice ", cuisineChoice);
     const list = new CircularLinkedList();
@@ -371,9 +388,6 @@ paymentSuccess = async (req, res, next) => {
     	message: "Subscription created successfully",
     	data: subscription
     });
-
-
-
 
     // -> logic ends here
   } catch (error) {

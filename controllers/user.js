@@ -148,7 +148,7 @@ list = async (req, res, next) => {
   console.log(" limit ", limit);
   console.log("offset", offset)
 	const users = await User.findAll({ where: { id: { [Op.ne]: req.user.id } }, limit, offset });
-	const totalUsers = await User.count();
+	const totalUsers = await User.count({ where: { id: { [Op.ne]: req.user.id } }});
 	res.status(200).json({
 		success: true,
     users,

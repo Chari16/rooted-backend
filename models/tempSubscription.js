@@ -52,6 +52,10 @@ const TempSubscription = db.define(
 		orderId: {
 			type: Sequelize.STRING,
 			required: false,
+		},
+		cuisineChoice: {
+			type: Sequelize.JSON,
+			required: false,
 		}
   },
   {

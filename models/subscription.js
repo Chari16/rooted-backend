@@ -55,6 +55,11 @@ const Subscription = db.define(
 			type: Sequelize.STRING,
 			required: true,
 		},
+		cuisineChoice: {
+			type: Sequelize.JSON,
+			required: false,
+			allowNull: true
+		}
   },
   {
     freezeTableName: true,

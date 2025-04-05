@@ -1,0 +1,30 @@
+{
+  "development": {
+    "username": "root",
+    "password": null,
+    "database": "rootedtoyou",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  },
+  "stage": {
+    "username": "admin",
+    "password": "WXMUs9GIVcw556CBlR0M",
+    "database": "rooted_test_db",
+    "host": "rooted-test-db.c36o284uu0pe.ap-south-1.rds.amazonaws.com",
+    "dialect": "mysql"
+  },
+  "test": {
+    "username": "root",
+    "password": null,
+    "database": "database_test",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  },
+  "production": {
+    "username": "root",
+    "password": null,
+    "database": "database_production",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  }
+}
