@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "env-cmd -f ./config/dev.env nodemon --legacy-watch index.js",
-    "stage": "env-cmd -f ./config/stage.env pm2 start index.js",
+    "stage": "env-cmd -f ./config/stage.env pm2 start --name backend index.js",
     "prod": "env-cmd -f ./config/prod.env pm2 start index.js",
     "stop": "pm2 stop index",
     "debug": "nodemon --inspect=0.0.0.0  index.js"
