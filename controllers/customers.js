@@ -260,13 +260,15 @@ googleLogin = async (req, res, next) => {
         token: token,
       });
     }
-    // generate jwt token
-    const jwtToken = await generateJwtToken(customer);
-    res.status(200).json({
-      success: true,
-      message: "Google login success",
-      token: jwtToken,
-    });
+    else {
+      // generate jwt token
+      const jwtToken = await generateJwtToken(customer);
+      res.status(200).json({
+        success: true,
+        message: "Google login success",
+        token: jwtToken,
+      });
+    }
   } catch (e) {
     next(e);
   }
