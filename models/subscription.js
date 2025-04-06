@@ -10,7 +10,7 @@ const Subscription = db.define(
       type: Sequelize.FLOAT,
       required: true,
     },
-		subscriptionType: { // 1monthl or weekly
+		subscriptionType: { // 1monthl or weekly or 1day
 			type: Sequelize.STRING,
       required: true,
 		},
@@ -57,6 +57,11 @@ const Subscription = db.define(
 		},
 		cuisineChoice: {
 			type: Sequelize.JSON,
+			required: false,
+			allowNull: true
+		},
+		deliveryType: { //lunch, dinner
+			type: Sequelize.STRING,
 			required: false,
 			allowNull: true
 		}

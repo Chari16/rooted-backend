@@ -378,7 +378,7 @@ getActiveSubscription = async (req, res, next) => {
       status: "no_subscriptions",
     });
   }
-  if (subscription && subscription.endDate < currentDate) {
+  if (subscription && new Date(subscription.endDate) > currentDate) {
     return res.status(200).json({
       success: true,
       status: 'expired',

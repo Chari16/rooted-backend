@@ -49,6 +49,7 @@ createOrder = async (req, res, next) => {
       boxId,
       dietType,
       weekendType,
+      deliveryType, //lunch or dinner
       cuisineChoice,
       startDate,
       endDate,
@@ -63,17 +64,20 @@ createOrder = async (req, res, next) => {
       where: { customerId: customerId },
       order: [["createdAt", "DESC"]], // Order by createdAt in descending order
     });
+    console.log(" subscription ===> ", subscription);
     // check if endDate is greater than current date
-    const currentDate = new Date();
-    if (subscription && subscription.endDate < currentDate) {
+    const newSubStartDate = new Date(startDate);
+    console.log(" newSubStartDate ", newSubStartDate);
+    console.log(" subscription end date ", subscription && new Date(subscription.endDate));
+    if (subscription && new Date(subscription.endDate) > newSubStartDate) {
+      console.log(" inside check block ")
       return res.status(200).json({
         success: true,
-        status: 'expired',
-        message: "Subscription expired",
+        message: "Already have active subscription for this time period",
         subscription,
       });
     }
-    
+
     const instance = new Razorpay({
       key_id: "rzp_test_wX9is0g9eug5V3",
       key_secret: "SeBUQOo8QEKEY75gqH36NX5E",
@@ -86,6 +90,7 @@ createOrder = async (req, res, next) => {
       subscriptionType,
       boxId,
       dietType,
+      deliveryType, //lunch or dinner
       weekendType,
       cuisineChoice,
       startDate,
@@ -161,8 +166,8 @@ paymentSuccess = async (req, res, next) => {
     });
     console.log(" tempSub ", tempSub);
 
-    const {amount, weekendType, status, boxId, itemNames, subscriptionType, dietType, startDate, endDate, customerId, itemCode, orderId  } = tempSub
-    const subscription = await Subscription.create({ amount, weekendType, status, boxId, itemNames, subscriptionType, dietType, startDate, endDate, customerId, itemCode, orderId, cuisineChoice: tempSub.cuisineChoice });
+    const {amount, weekendType, status, boxId, itemNames, subscriptionType, dietType, deliveryType, startDate, endDate, customerId, itemCode, orderId  } = tempSub
+    const subscription = await Subscription.create({ amount, weekendType, status, boxId, itemNames, subscriptionType, deliveryType, dietType, startDate, endDate, customerId, itemCode, orderId, cuisineChoice: tempSub.cuisineChoice });
 
     await Customer.update({ wallet: customer.wallet - transaction.walletAdjusted }, { where: { id: transaction.customerId } });
 
