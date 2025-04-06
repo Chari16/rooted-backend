@@ -366,13 +366,13 @@ getUserSubscriptions = async (req, res, next) => {
 };
 
 getActiveSubscription = async (req, res, next) => {
+  const { startDate } = req.body;
   const { id } = req.params;
   const subscription = await Subscription.findOne({
     where: { customerId: id, status: 'active' },
     order: [["createdAt", "DESC"]], // Order by createdAt in descending order
   });
   // check if endDate is greater than current date
-  const currentDate = new Date();
   if (!subscription) {
     return res.status(404).json({
       success: false,
@@ -380,7 +380,7 @@ getActiveSubscription = async (req, res, next) => {
       status: "no_subscriptions",
     });
   }
-  if (subscription && new Date(subscription.endDate) > currentDate) {
+  if (subscription && new Date(subscription.endDate) > new Date(startDate)) {
     return res.status(200).json({
       success: true,
       status: 'expired',

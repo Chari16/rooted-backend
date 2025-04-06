@@ -125,7 +125,6 @@ paymentSuccess = async (req, res, next) => {
     const {
       orderCreationId,
       razorpayPaymentId,
-      razorpayOrderId,
       razorpaySignature,
     } = req.body;
 
