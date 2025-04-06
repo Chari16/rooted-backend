@@ -1,4 +1,4 @@
-const { Sequelize } = require("sequelize");
+const { Sequelize, where } = require("sequelize");
 const axios = require("axios");
 const User = require("../models/user");
 const Customer = require("../models/customer");
@@ -330,6 +330,7 @@ verifyOtp = async (req, res, next) => {
         message: "Invalid OTP",
       });
     }
+    await Customer.update({ status: 'active' } , { where: { id: customer.id } });
     // verify if otp is valid
     const otpCreatedAt = new Date(customer.otpCreatedAt);
     const currentTime = new Date();
