@@ -44,7 +44,7 @@ list = async (req, res, next) => {
 
 createOrder = async (req, res, next) => {
   try {
-    const { amount, gst, shippingAmount, discount, customerId,
+    const { amount, orderAmount, gst, shippingAmount, discount, customerId,
       subscriptionType,
       boxId,
       dietType,
@@ -83,7 +83,7 @@ createOrder = async (req, res, next) => {
       key_secret: "SeBUQOo8QEKEY75gqH36NX5E",
     });
 
-    const order = await instance.orders.create({ amount, currency: "INR" });
+    const order = await instance.orders.create({ amount: amount * 100, currency: "INR" });
     await TempSubscription.create({
       amount,
       customerId,
