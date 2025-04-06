@@ -61,7 +61,7 @@ createOrder = async (req, res, next) => {
      } = req.body;
 
     const subscription = await Subscription.findOne({
-      where: { customerId: customerId },
+      where: { customerId: customerId, status: 'active' },
       order: [["createdAt", "DESC"]], // Order by createdAt in descending order
     });
     console.log(" subscription ===> ", subscription);

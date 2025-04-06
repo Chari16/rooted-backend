@@ -242,7 +242,6 @@ googleLogin = async (req, res, next) => {
     const customer = await Customer.findOne({
       where: {
         email: email,
-        googleId: sub,
       },
     });
     if (!customer) {
@@ -285,7 +284,6 @@ facebookLogin = async (req, res, next) => {
     const customer = await Customer.findOne({
       where: {
         email: email,
-        fbId: id,
       },
     });
     if (!customer) {

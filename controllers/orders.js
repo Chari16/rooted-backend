@@ -303,7 +303,7 @@ getKitchenSchedule = async (req, res, next) => {
 pauseOrder = async (req, res, next) => {
   try {
     // payload -> { subscriptionId, pauseDate, customerId }
-    const { subscriptionId, pauseDate, customerId } = req.body;
+    const { subscriptionId, pauseDate, customerId, orderId } = req.body;
     console.log(" pause order ", subscriptionId, pauseDate, customerId);
     const month = new Date(pauseDate).getMonth();
     const year = new Date(pauseDate).getFullYear();

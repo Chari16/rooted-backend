@@ -1,5 +1,7 @@
 const { WEEKEND_TYPE } = require("../enums");
 const Order = require("../models/order");
+const Customer = require("../models/customer");
+const Transactions = require("../models/transaction");
 const Subscription = require("../models/subscription");
 const SubscriptionMap = require("../models/subscriptionMap");
 const MealBox = require("../models/mealBox");
@@ -366,7 +368,7 @@ getUserSubscriptions = async (req, res, next) => {
 getActiveSubscription = async (req, res, next) => {
   const { id } = req.params;
   const subscription = await Subscription.findOne({
-    where: { customerId: id },
+    where: { customerId: id, status: 'active' },
     order: [["createdAt", "DESC"]], // Order by createdAt in descending order
   });
   // check if endDate is greater than current date
@@ -393,6 +395,62 @@ getActiveSubscription = async (req, res, next) => {
   });
 };
 
+cancelSubscription = async (req, res, next) => {
+  const { id } = req.params;
+  const subscription = await Subscription.findOne({ where: { id } });
+  if (!subscription) {
+    return res.status(404).json({
+      success: false,
+      message: "Subscription not found",
+    });
+  }
+
+  const transaction = await Transactions.findOne({ orderId: subscription.orderId });
+  const  { amount, walletAdjusted } = transaction
+  const totalAmount = amount + walletAdjusted
+  // retrieve all order for this subscription id for which order date is greater than current date
+  const currentDate = new Date();
+  const orders = await Order.findAll({
+    where: {
+      subscriptionId: id,
+      orderDate: {
+        [Op.gt]: currentDate,
+      },
+    },
+  });
+  if (!orders || orders.length === 0) {
+    return res.status(404).json({
+      success: false,
+      message: "No orders found for this subscription",
+    });
+  }
+  // calculate the refund for remaining orders
+  let refund = 0;
+
+  if(subscription.subscriptionType === 'weekly') {
+    // calculate the refund for remaining weeks
+    refund = (totalAmount / 6) * orders.length;
+  }
+  if(subscription.subscriptionType === 'monthly') {
+    // calculate the refund for remaining months
+    refund = (totalAmount / 26) * orders.length;
+  }
+  // update users wallet with refund amount
+  await Customer.update({ wallet: refund }, { where: { id: subscription.customerId } });
+
+  // update the order status to inactive
+  for (let i = 0; i < orders.length; i++) {
+    await orders[i].update({ status: 'inactive' });
+  }
+
+  await subscription.update({ status: 'inactive' });
+
+  res.status(200).json({
+    success: true,
+    message: "Subscription cancelled successfully",
+  });
+}
+
 module.exports = {
   create,
   list,
@@ -400,5 +458,6 @@ module.exports = {
   updateBoxDetails,
   buySubscription,
   getUserSubscriptions,
-  getActiveSubscription
+  getActiveSubscription,
+  cancelSubscription
 };
