@@ -17,24 +17,33 @@ module.exports = {
     //   type: Sequelize.JSON, // Change to JSON type
     //   allowNull: true,
     // });
-    await queryInterface.addColumn("subscriptions", "deliveryType", {
-      type: Sequelize.STRING,
+    // await queryInterface.addColumn("subscriptions", "deliveryType", {
+    //   type: Sequelize.STRING,
+    //   allowNull: true,
+    // });
+    // await queryInterface.sequelize.query(`
+    //   UPDATE subscriptions
+    //   SET deliveryType = 'lunch'
+    //   WHERE deliveryType IS NULL;
+    // `);
+    // await queryInterface.addColumn("temp_subscriptions", "deliveryType", {
+    //   type: Sequelize.STRING,
+    //   allowNull: true,
+    // });
+    // await queryInterface.sequelize.query(`
+    //   UPDATE temp_subscriptions
+    //   SET deliveryType = 'lunch'
+    //   WHERE deliveryType IS NULL;
+    // `);
+
+    await queryInterface.addColumn("subscriptions", "selectedDates", {
+      type: Sequelize.JSON,
       allowNull: true,
     });
-    await queryInterface.sequelize.query(`
-      UPDATE subscriptions
-      SET deliveryType = 'lunch'
-      WHERE deliveryType IS NULL;
-    `);
-    await queryInterface.addColumn("temp_subscriptions", "deliveryType", {
-      type: Sequelize.STRING,
+    await queryInterface.addColumn("temp_subscriptions", "selectedDates", {
+      type: Sequelize.JSON,
       allowNull: true,
     });
-    await queryInterface.sequelize.query(`
-      UPDATE temp_subscriptions
-      SET deliveryType = 'lunch'
-      WHERE deliveryType IS NULL;
-    `);
   },
 
   async down (queryInterface, Sequelize) {

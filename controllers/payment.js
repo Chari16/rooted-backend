@@ -44,7 +44,7 @@ list = async (req, res, next) => {
 
 createOrder = async (req, res, next) => {
   try {
-    const { amount, orderAmount, gst, shippingAmount, discount, customerId,
+    const { amount, gst, shippingAmount, discount, customerId,
       subscriptionType,
       boxId,
       dietType,
@@ -57,7 +57,8 @@ createOrder = async (req, res, next) => {
       itemCode,
       itemNames,
       walletAmount,
-      couponCode
+      couponCode,
+      selectedDates // [] of string
      } = req.body;
 
     const subscription = await Subscription.findOne({
@@ -99,6 +100,7 @@ createOrder = async (req, res, next) => {
       itemCode,
       itemNames,
       orderId: order.id,
+      selectedDates
     });
     await Transaction.create({
       customerId: customerId,
@@ -113,6 +115,86 @@ createOrder = async (req, res, next) => {
     });
 
     res.json(order);
+  } catch (error) {
+    console.log(" error ", error);
+    res.status(500).send(error);
+  }
+};
+
+createNewOrder = async (req, res, next) => {
+  try {
+    const { amount, orderAmount, gst, shippingAmount, discount, customerId,
+      subscriptionType,
+      boxId,
+      dietType,
+      weekendType,
+      deliveryType, //lunch or dinner
+      cuisineChoice,
+      startDate,
+      endDate,
+      status,
+      itemCode,
+      itemNames,
+      walletAmount,
+      couponCode,
+      selectedDates // [] of string
+    } = req.body;
+    console.log(" selected dates ", selectedDates)
+
+    const subscription = await Subscription.findOne({
+      where: { customerId: customerId, status: 'active' },
+      order: [["createdAt", "DESC"]], // Order by createdAt in descending order
+    });
+    console.log(" subscription ===> ", subscription);
+    const newSubStartDate = new Date(startDate);
+    console.log(" newSubStartDate ", newSubStartDate);
+    console.log(" subscription end date ", subscription && new Date(subscription.endDate));
+    if (subscription && new Date(subscription.endDate) > newSubStartDate) {
+      console.log(" inside check block ")
+      return res.status(200).json({
+        success: true,
+        message: "Already have active subscription for this time period",
+        subscription,
+      });
+    }
+
+    const instance = new Razorpay({
+      key_id: "rzp_test_wX9is0g9eug5V3",
+      key_secret: "SeBUQOo8QEKEY75gqH36NX5E",
+    });
+
+    const order = await instance.orders.create({ amount: amount * 100, currency: "INR" });
+    await TempSubscription.create({
+      amount,
+      customerId,
+      subscriptionType,
+      boxId,
+      dietType,
+      deliveryType,
+      weekendType,
+      cuisineChoice,
+      startDate,
+      endDate,
+      status,
+      itemCode,
+      itemNames,
+      orderId: order.id,
+      selectedDates
+    });
+    await Transaction.create({
+      customerId: customerId,
+      orderId: order.id,
+      status: "created",
+      amount: amount,
+      gst: gst,
+      shippingAmount: shippingAmount,
+      discount: discount,
+      walletAdjusted: walletAmount,
+      couponCode,
+    });
+
+    res.json(order);
+
   } catch (error) {
     console.log(" error ", error);
     res.status(500).send(error);
@@ -165,8 +247,8 @@ paymentSuccess = async (req, res, next) => {
     });
     console.log(" tempSub ", tempSub);
 
-    const {amount, weekendType, status, boxId, itemNames, subscriptionType, dietType, deliveryType, startDate, endDate, customerId, itemCode, orderId  } = tempSub
-    const subscription = await Subscription.create({ amount, weekendType, status, boxId, itemNames, subscriptionType, deliveryType, dietType, startDate, endDate, customerId, itemCode, orderId, cuisineChoice: tempSub.cuisineChoice });
+    const {amount, weekendType, status, boxId, itemNames, subscriptionType, dietType, deliveryType, startDate, endDate, customerId, itemCode, orderId, selectedDates  } = tempSub
+    const subscription = await Subscription.create({ amount, weekendType, status, boxId, itemNames, subscriptionType, deliveryType, dietType, startDate, endDate, customerId, itemCode, orderId, cuisineChoice: tempSub.cuisineChoice, selectedDates });
 
     await Customer.update({ wallet: customer.wallet - transaction.walletAdjusted }, { where: { id: transaction.customerId } });
 
@@ -184,213 +266,34 @@ paymentSuccess = async (req, res, next) => {
       choicesAvailable = true;
     }
     console.log(" list ", list);
-    const subStartDate = new Date(subscription.startDate);
-    const subEndDate = new Date(subscription.endDate);
-    let schedule = [];
-    let weekends = [];
 
-    console.log("start Date ", subStartDate);
-    console.log("end Date ", subEndDate);
-    const holidayStartDate = subStartDate.getDate() - 1
-    const holidays = await Holiday.findAll({ where: { date: {[Op.between]: [holidayStartDate, subEndDate]} }});
-    console.log(" holidays ", holidays);
+    // new logic of creating orders with selected dates
+    const dates = subscription.selectedDates;
 
-    const isPublicHoliday = (currentDate) => {
-      return holidays.some(holiday => {
-        const holidayDate = new Date(holiday.date).toISOString().split("T")[0]; // Format holiday date as YYYY-MM-DD
-        const currDate = currentDate.toISOString().split("T")[0]; // Format current date as YYYY-MM-DD
-        return holidayDate === currDate; // Compare the dates
-      })
-    }
-
-    if (weekendType == WEEKEND_TYPE.ALL) {
-      // holiday on all saturdays
-      console.log(" INSIDE ALL ===>")
-      let currentNode = list.head;
-      while (subStartDate <= subEndDate) {
-        // console.log(" new start date ", startDate);
-        let day = startDate.getDay();
-
-        // check for holiday
-        if (day === 6 || day === 0 || isPublicHoliday(subStartDate)) {
-          weekends.push({
-            orderDate: new Date(subStartDate),
-            orderStatus: 0,
-          });
-        } else {
-          // console.log(" start date inside else  ", startDate);
-          console.log(" currentNode ", currentNode);
-          const currentChoice = choicesAvailable ? list.getCurrentValue(currentNode) : null;
-          schedule.push({
-            orderDate: new Date(subStartDate),
-            boxId: boxId,
-            cuisineId: currentChoice,
-            customerId: subscription.customerId,
-            subscriptionId: subscription.id,
-            status: 'active'
-          });
-          if(choicesAvailable) {
-            currentNode = currentNode.next;
-          }
+    // loop through dates to create array of orders
+    const orders = [];
+    let currHead = list.head;
+    for(let i = 0; i < dates.length; i++) {
+      const orderDate = new Date(dates[i]);
+        const currentChoice = choicesAvailable ? list.getCurrentValue(currHead) : null;
+        orders.push({
+          orderDate: orderDate,
+          boxId: boxId,
+          cuisineId: currentChoice,
+          customerId: subscription.customerId,
+          subscriptionId: subscription.id,
+          status: 'active'
+        });
+        if(choicesAvailable) {
+          currHead = currHead.next;
         }
-        subStartDate.setDate(subStartDate.getDate() + 1); // Move to next day
-      }
-
-      // return schedule;
     }
-    if (weekendType == WEEKEND_TYPE.EVEN) {
-      // holiday on 2nd and 4th
-      let currentNode = list.head;
-      while (subStartDate <= subEndDate) {
-        let day = subStartDate.getDay();
-        if (day === 6 || day === 0 || isPublicHoliday(subStartDate)) {
-          if (day === 6 || isPublicHoliday(subStartDate)) {
-            const isHoliday = checkHoliday(
-              subStartDate.toISOString().split("T")[0], WEEKEND_TYPE.EVEN
-            );
-            console.log(" isHoliday ", isHoliday, subStartDate);
-            console.log(" isPublicHoliday ", isPublicHoliday(subStartDate));
-            if (!isHoliday && !isPublicHoliday(subStartDate)) {
-              console.log(" currentNode ", currentNode);
-              const currentChoice = choicesAvailable ? list.getCurrentValue(currentNode) : null;
-              schedule.push({
-                orderDate: new Date(subStartDate),
-                boxId: boxId,
-                cuisineId: currentChoice,
-                customerId: subscription.customerId,
-                subscriptionId: subscription.id,
-                status: 'active'
-              });
-              if(choicesAvailable) {
-                currentNode = currentNode.next;
-              }
-            }
-          } else {
-            weekends.push({
-              orderDate: new Date(subStartDate),
-              orderStatus: 0,
-            });
-          }
-        } else {
-          const currentChoice = choicesAvailable ? list.getCurrentValue(currentNode) : null;
-          schedule.push({
-            orderDate: new Date(subStartDate),
-            boxId: boxId,
-            cuisineId: currentChoice,
-            customerId: subscription.customerId,
-            subscriptionId: subscription.id,
-            status: 'active'
-          });
-          if(choicesAvailable) {
-            currentNode = currentNode.next;
-          }
-        }
-        subStartDate.setDate(subStartDate.getDate() + 1); // Move to next day
-      }
-    }
-    if (weekendType == WEEKEND_TYPE.ODD) {
-      console.log(" INSIDE ODD ===>")
-      // holiday on 1st and 3rd
-      let currentNode = list.head;
-      while (subStartDate <= subEndDate) {
-        let day = subStartDate.getDay();
-        if (day === 6 || day === 0 || isPublicHoliday(subStartDate)) {
-          if (day === 6 || isPublicHoliday(subStartDate)) {
-            const isHoliday = checkHoliday(
-              subStartDate.toISOString().split("T")[0], WEEKEND_TYPE.ODD
-            );
-            console.log(" isHoliday ", isHoliday);
-            if(!isHoliday && !isPublicHoliday(subStartDate)) {
-              const currentChoice = choicesAvailable ? list.getCurrentValue(currentNode) : null;
-              schedule.push({
-                orderDate: new Date(subStartDate),
-                boxId: boxId,
-                cuisineId: currentChoice,
-                customerId: subscription.customerId,
-                subscriptionId: subscription.id,
-                status: 'active'
-              });
-              if(choicesAvailable) {
-                currentNode = currentNode.next;
-              }
-            }
-          } else {
-            weekends.push({
-              orderDate: new Date(subStartDate),
-              orderStatus: 0,
-            });
-          }
-        } else {
-          const currentChoice = choicesAvailable ? list.getCurrentValue(currentNode) : null;
-          schedule.push({
-            orderDate: new Date(subStartDate),
-            boxId: boxId,
-            cuisineId: currentChoice,
-            customerId: subscription.customerId,
-            subscriptionId: subscription.id,
-            status: 'active'
-          });
-          if(choicesAvailable) {
-            currentNode = currentNode.next;
-          }
-        }
-        subStartDate.setDate(subStartDate.getDate() + 1); // Move to next day
-      }
-    }
-    if (weekendType == WEEKEND_TYPE.NONE) {
-      // only sunday holiday
-      let currentNode = list.head;
-      while (subStartDate <= subEndDate) {
-        let day = subStartDate.getDay();
-        if(day === 0 || isPublicHoliday(subStartDate)) {
-          // push everything in weekends
-          weekends.push({
-            orderDate: new Date(subStartDate),
-            orderStatus: 0,
-          });
-        }
-        else {
-          const currentChoice = choicesAvailable ? list.getCurrentValue(currentNode) : null;
-          schedule.push({
-            orderDate: new Date(subStartDate),
-            boxId: boxId,
-            cuisineId: currentChoice,
-            customerId: subscription.customerId,
-            subscriptionId: subscription.id,
-            status: 'active'
-          });
-          if(choicesAvailable) {
-            currentNode = currentNode.next;
-          }
-        }
-        subStartDate.setDate(subStartDate.getDate() + 1); // Move to next day
-      }
-    }
-    console.log(" schedule ", schedule);
-    console.log(" weekends ", weekends);
-    // if(cuisineChoice && cuisineChoice.length) {
-    //   const choiceMap = []
-    //   for(let i = 0; i < cuisineChoice.length; i++) {
-    //     choiceMap.push({ cuisineId: cuisineChoice[i], subscriptionId: subscription.id });
-    //   }
-    //   await SubscriptionMap.bulkCreate(choiceMap);
-    // }
-    // order creation process
-    // Need to create order for whole month / week
-    // loop through start and end date
-    // evaluate type of saturdays selected
-    // and add order for those saturdays
-    // don't schedule order for sunday
-    // while scheduling maintain the order of the cuisine as stored
-    // for subscription with random cuisine, no cuisine id to be allocated
-
-
-    await Order.bulkCreate(schedule);
-
-    res.status(200).json({
-    	success: true,
-    	message: "Subscription created successfully",
-    	data: subscription
+    // bulk create Orders
+    await Order.bulkCreate(orders);
+    return res.status(200).json({
+      success: true,
+      message: "Subscription created successfully",
+      data: subscription,
     });
 
     // -> logic ends here
@@ -423,9 +326,286 @@ webhook = async (req, res, next) => {
   }
 };
 
+oldPaymentSuccess = async (req, res, next) => {
+      // getting the details back from our font-end
+      const {
+        orderCreationId,
+        razorpayPaymentId,
+        razorpaySignature,
+      } = req.body;
+  
+      // Creating our own digest
+      // The format should be like this:
+      // digest = hmac_sha256(orderCreationId + "|" + razorpayPaymentId, secret);
+      const shasum = crypto.createHmac("sha256", "SeBUQOo8QEKEY75gqH36NX5E");
+  
+      shasum.update(`${orderCreationId}|${razorpayPaymentId}`);
+  
+      const digest = shasum.digest("hex");
+  
+      // comaparing our digest with the actual signature
+      if (digest !== razorpaySignature)
+        return res.status(400).json({ msg: "Transaction not legit!" });
+  
+      // THE PAYMENT IS LEGIT & VERIFIED
+      // YOU CAN SAVE THE DETAILS IN YOUR DATABASE IF YOU WANT
+      
+      await Transaction.update(
+        { status: "completed", razorpayPaymentId },
+        { where: { orderId: orderCreationId } }
+      );
+      const transaction = await Transaction.findOne({
+        where: { orderId: orderCreationId },
+      });
+  
+      const customer = await Customer.findOne({
+        where: { id: transaction.customerId },
+      });
+  
+      await TempSubscription.update(
+        { orderId: orderCreationId, status: 'active' },
+        { where: { orderId: orderCreationId } }
+      );
+      const tempSub = await TempSubscription.findOne({
+        where: { orderId: orderCreationId },
+      });
+      console.log(" tempSub ", tempSub);
+  
+      const {amount, weekendType, status, boxId, itemNames, subscriptionType, dietType, deliveryType, startDate, endDate, customerId, itemCode, orderId  } = tempSub
+      const subscription = await Subscription.create({ amount, weekendType, status, boxId, itemNames, subscriptionType, deliveryType, dietType, startDate, endDate, customerId, itemCode, orderId, cuisineChoice: tempSub.cuisineChoice });
+  
+      await Customer.update({ wallet: customer.wallet - transaction.walletAdjusted }, { where: { id: transaction.customerId } });
+  
+      // trigger the buy subscription flow here
+      const cuisineChoice = tempSub.cuisineChoice;
+      let choicesAvailable = false;
+      console.log(" cuisineChoice ", cuisineChoice);
+      const list = new CircularLinkedList();
+      console.log(" initial list ", list)
+      if(cuisineChoice && cuisineChoice.length) {
+        // populate the linkedlist
+        for(let i = 0; i < cuisineChoice.length; i++) { 
+          list.append(cuisineChoice[i]);
+        }
+        choicesAvailable = true;
+      }
+      console.log(" list ", list);
+  
+  console.log(" payment success ");
+  const subStartDate = new Date(subscription.startDate);
+  const subEndDate = new Date(subscription.endDate);
+  let schedule = [];
+  let weekends = [];
+
+  console.log("start Date ", subStartDate);
+  console.log("end Date ", subEndDate);
+  const holidayStartDate = subStartDate.getDate() - 1
+  const holidays = await Holiday.findAll({ where: { date: {[Op.between]: [holidayStartDate, subEndDate]} }});
+  console.log(" holidays ", holidays);
+
+  const isPublicHoliday = (currentDate) => {
+    return holidays.some(holiday => {
+      const holidayDate = new Date(holiday.date).toISOString().split("T")[0]; // Format holiday date as YYYY-MM-DD
+      const currDate = currentDate.toISOString().split("T")[0]; // Format current date as YYYY-MM-DD
+      return holidayDate === currDate; // Compare the dates
+    })
+  }
+
+  if (weekendType == WEEKEND_TYPE.ALL) {
+    // holiday on all saturdays
+    console.log(" INSIDE ALL ===>")
+    let currentNode = list.head;
+    while (subStartDate <= subEndDate) {
+      // console.log(" new start date ", startDate);
+      let day = startDate.getDay();
+
+      // check for holiday
+      if (day === 6 || day === 0 || isPublicHoliday(subStartDate)) {
+        weekends.push({
+          orderDate: new Date(subStartDate),
+          orderStatus: 0,
+        });
+      } else {
+        // console.log(" start date inside else  ", startDate);
+        console.log(" currentNode ", currentNode);
+        const currentChoice = choicesAvailable ? list.getCurrentValue(currentNode) : null;
+        schedule.push({
+          orderDate: new Date(subStartDate),
+          boxId: boxId,
+          cuisineId: currentChoice,
+          customerId: subscription.customerId,
+          subscriptionId: subscription.id,
+          status: 'active'
+        });
+        if(choicesAvailable) {
+          currentNode = currentNode.next;
+        }
+      }
+      subStartDate.setDate(subStartDate.getDate() + 1); // Move to next day
+    }
+
+    // return schedule;
+  }
+  if (weekendType == WEEKEND_TYPE.EVEN) {
+    // holiday on 2nd and 4th
+    let currentNode = list.head;
+    while (subStartDate <= subEndDate) {
+      let day = subStartDate.getDay();
+      if (day === 6 || day === 0 || isPublicHoliday(subStartDate)) {
+        if (day === 6 || isPublicHoliday(subStartDate)) {
+          const isHoliday = checkHoliday(
+            subStartDate.toISOString().split("T")[0], WEEKEND_TYPE.EVEN
+          );
+          console.log(" isHoliday ", isHoliday, subStartDate);
+          console.log(" isPublicHoliday ", isPublicHoliday(subStartDate));
+          if (!isHoliday && !isPublicHoliday(subStartDate)) {
+            console.log(" currentNode ", currentNode);
+            const currentChoice = choicesAvailable ? list.getCurrentValue(currentNode) : null;
+            schedule.push({
+              orderDate: new Date(subStartDate),
+              boxId: boxId,
+              cuisineId: currentChoice,
+              customerId: subscription.customerId,
+              subscriptionId: subscription.id,
+              status: 'active'
+            });
+            if(choicesAvailable) {
+              currentNode = currentNode.next;
+            }
+          }
+        } else {
+          weekends.push({
+            orderDate: new Date(subStartDate),
+            orderStatus: 0,
+          });
+        }
+      } else {
+        const currentChoice = choicesAvailable ? list.getCurrentValue(currentNode) : null;
+        schedule.push({
+          orderDate: new Date(subStartDate),
+          boxId: boxId,
+          cuisineId: currentChoice,
+          customerId: subscription.customerId,
+          subscriptionId: subscription.id,
+          status: 'active'
+        });
+        if(choicesAvailable) {
+          currentNode = currentNode.next;
+        }
+      }
+      subStartDate.setDate(subStartDate.getDate() + 1); // Move to next day
+    }
+  }
+  if (weekendType == WEEKEND_TYPE.ODD) {
+    console.log(" INSIDE ODD ===>")
+    // holiday on 1st and 3rd
+    let currentNode = list.head;
+    while (subStartDate <= subEndDate) {
+      let day = subStartDate.getDay();
+      if (day === 6 || day === 0 || isPublicHoliday(subStartDate)) {
+        if (day === 6 || isPublicHoliday(subStartDate)) {
+          const isHoliday = checkHoliday(
+            subStartDate.toISOString().split("T")[0], WEEKEND_TYPE.ODD
+          );
+          console.log(" isHoliday ", isHoliday);
+          if(!isHoliday && !isPublicHoliday(subStartDate)) {
+            const currentChoice = choicesAvailable ? list.getCurrentValue(currentNode) : null;
+            schedule.push({
+              orderDate: new Date(subStartDate),
+              boxId: boxId,
+              cuisineId: currentChoice,
+              customerId: subscription.customerId,
+              subscriptionId: subscription.id,
+              status: 'active'
+            });
+            if(choicesAvailable) {
+              currentNode = currentNode.next;
+            }
+          }
+        } else {
+          weekends.push({
+            orderDate: new Date(subStartDate),
+            orderStatus: 0,
+          });
+        }
+      } else {
+        const currentChoice = choicesAvailable ? list.getCurrentValue(currentNode) : null;
+        schedule.push({
+          orderDate: new Date(subStartDate),
+          boxId: boxId,
+          cuisineId: currentChoice,
+          customerId: subscription.customerId,
+          subscriptionId: subscription.id,
+          status: 'active'
+        });
+        if(choicesAvailable) {
+          currentNode = currentNode.next;
+        }
+      }
+      subStartDate.setDate(subStartDate.getDate() + 1); // Move to next day
+    }
+  }
+  if (weekendType == WEEKEND_TYPE.NONE) {
+    // only sunday holiday
+    let currentNode = list.head;
+    while (subStartDate <= subEndDate) {
+      let day = subStartDate.getDay();
+      if(day === 0 || isPublicHoliday(subStartDate)) {
+        // push everything in weekends
+        weekends.push({
+          orderDate: new Date(subStartDate),
+          orderStatus: 0,
+        });
+      }
+      else {
+        const currentChoice = choicesAvailable ? list.getCurrentValue(currentNode) : null;
+        schedule.push({
+          orderDate: new Date(subStartDate),
+          boxId: boxId,
+          cuisineId: currentChoice,
+          customerId: subscription.customerId,
+          subscriptionId: subscription.id,
+          status: 'active'
+        });
+        if(choicesAvailable) {
+          currentNode = currentNode.next;
+        }
+      }
+      subStartDate.setDate(subStartDate.getDate() + 1); // Move to next day
+    }
+  }
+  console.log(" schedule ", schedule);
+  console.log(" weekends ", weekends);
+      // if(cuisineChoice && cuisineChoice.length) {
+    //   const choiceMap = []
+    //   for(let i = 0; i < cuisineChoice.length; i++) {
+    //     choiceMap.push({ cuisineId: cuisineChoice[i], subscriptionId: subscription.id });
+    //   }
+    //   await SubscriptionMap.bulkCreate(choiceMap);
+    // }
+    // order creation process
+    // Need to create order for whole month / week
+    // loop through start and end date
+    // evaluate type of saturdays selected
+    // and add order for those saturdays
+    // don't schedule order for sunday
+    // while scheduling maintain the order of the cuisine as stored
+    // for subscription with random cuisine, no cuisine id to be allocated
+
+
+    await Order.bulkCreate(schedule);
+
+    res.status(200).json({
+    	success: true,
+    	message: "Subscription created successfully",
+    	data: subscription
+    });
+}
+
 module.exports = {
   list,
   createOrder,
+  createNewOrder,
   webhook,
   paymentSuccess,
   paymentFailed,

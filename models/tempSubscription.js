@@ -1,5 +1,6 @@
 const Sequelize = require("sequelize");
 const db = require("../db/sequelize");
+const { all } = require("axios");
 
 const TempSubscription = db.define(
   "temp_subscriptions",
@@ -56,6 +57,16 @@ const TempSubscription = db.define(
 		cuisineChoice: {
 			type: Sequelize.JSON,
 			required: false,
+		},
+		deliveryType: {
+			type: Sequelize.STRING,
+			required: false,
+			allowNull: true
+		},
+		selectedDates: {
+			type: Sequelize.JSON,
+			required: false,
+			allowNull: true
 		}
   },
   {

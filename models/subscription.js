@@ -64,7 +64,12 @@ const Subscription = db.define(
 			type: Sequelize.STRING,
 			required: false,
 			allowNull: true
-		}
+		},
+		selectedDates: {
+			type: Sequelize.JSON,
+			required: false,
+			allowNull: true
+		},
   },
   {
     freezeTableName: true,
