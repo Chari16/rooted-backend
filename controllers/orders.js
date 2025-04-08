@@ -147,7 +147,7 @@ getKitchenSchedule = async (req, res, next) => {
       attributes: [
         "orderDate", // Include orderDate in the result
         [Sequelize.col("subscription.dietType"), "dietType"], // Include dietType from Subscription
-        [Sequelize.fn("COUNT", Sequelize.col("Orders.id")), "itemCount"], // Count the number of items
+        [Sequelize.fn("COUNT", Sequelize.col("orders.id")), "itemCount"], // Count the number of items
       ],
       where: {
         orderDate: {
@@ -190,7 +190,7 @@ getKitchenSchedule = async (req, res, next) => {
       attributes: [
         "orderDate", // Include orderDate in the result
         "cuisineId", // Include cuisineId in the result
-        [Sequelize.fn("COUNT", Sequelize.col("Orders.id")), "orderCount"], // Count the number of orders
+        [Sequelize.fn("COUNT", Sequelize.col("orders.id")), "orderCount"], // Count the number of orders
       ],
       where: {
         orderDate: {
@@ -212,7 +212,7 @@ getKitchenSchedule = async (req, res, next) => {
       attributes: [
         "orderDate", // Include orderDate in the result
         "boxId", // Include boxId in the result
-        [Sequelize.fn("COUNT", Sequelize.col("Orders.id")), "boxCount"], // Count the number of orders for each box
+        [Sequelize.fn("COUNT", Sequelize.col("orders.id")), "boxCount"], // Count the number of orders for each box
       ],
       where: {
         orderDate: {
