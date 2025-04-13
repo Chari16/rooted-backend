@@ -8,6 +8,10 @@ const Holidays = db.define(
       type: Sequelize.STRING,
       required: true,
     },
+    description: {
+      type: Sequelize.STRING,
+      required: false,
+    },
     isDeleted: {
       type: Sequelize.BOOLEAN,
       required: true,

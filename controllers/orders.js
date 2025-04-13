@@ -128,6 +128,41 @@ getOrders = async (req, res, next) => {
   }
 };
 
+getOrdersList = async (req, res, next) => {
+  try {
+    const { startDate, endDate } = req.query;
+    const orders = await Order.findAll({
+      where: {
+        orderDate: {
+          [Op.between]: [new Date(startDate), new Date(endDate)], // Filter by date range
+        },
+      },
+      include: [
+        {
+          model: MealBox, // Assuming Box is the model for boxId
+          as: "box", // Alias for the association
+        },
+        {
+          model: Cuisine, // Include Cuisine model
+          as: "cuisine", // Alias for the association (must match the alias in your Sequelize association)
+        },
+        {
+          model: Subscription, // Include Subscription model
+          as: "subscription", // Alias for the association
+        },
+        { model: Customer, as: "customer" },
+      ],
+    });
+
+    res.status(200).json({
+      success: true,
+      orders,
+    });
+  } catch (e) {
+    next(e);
+  }
+};
+
 getKitchenSchedule = async (req, res, next) => {
   try {
     const { startDate, endDate } = req.query;
@@ -229,6 +264,47 @@ getKitchenSchedule = async (req, res, next) => {
       ],
     });
 
+    // Fetch orders grouped by deliveryType
+    const ordersGroupedByDeliveryType = await Order.findAll({
+      attributes: [
+        "orderDate", // Include orderDate in the result
+        [Sequelize.col("subscription.deliveryType"), "deliveryType"], // Include deliveryType in the result
+        [Sequelize.fn("COUNT", Sequelize.col("orders.id")), "orderCount"], // Count the number of orders for each delivery type
+      ],
+      where: {
+        orderDate: {
+          [Op.between]: [new Date(startDate), new Date(endDate)], // Filter by date range
+        },
+      },
+      group: ["orderDate", "subscription.deliveryType"], // Group by orderDate and deliveryType
+      include: [
+        {
+          model: Subscription,
+          as: "subscription", // Include the Subscription model
+          attributes: [], // Include the deliveryType of the subscription
+        }
+      ],
+    });
+
+    // meal time counts
+    const mealTimeCounts = {};
+    const mealTypes = [{name: 'Lunch', id: 'lunch'}, {name: 'Dinner', id: 'dinner'}];
+    mealTypes.forEach((mealType) => {
+      mealTimeCounts[mealType.id] = { name: mealType.name, dates: {} }; 
+      allDates.forEach((date) => {
+        mealTimeCounts[mealType.id].dates[date] =  0; // Initialize counts for each date
+      });
+    })
+    // Populate the mealTimeCounts map with data from the query
+    ordersGroupedByDeliveryType.forEach((order) => {
+      const orderDate = new Date(order.orderDate).toISOString().split("T")[0]; // Format as YYYY-MM-DD
+      const deliveryType = order.dataValues.deliveryType; // Map deliveryType to lunch or dinner
+      const orderCount = order.dataValues.orderCount; // Get the count for the delivery type
+      if(mealTimeCounts[deliveryType]) {
+        mealTimeCounts[deliveryType].dates[orderDate] = orderCount; // Update the count for the date
+      }
+    });
+
     // Initialize all cuisines with all dates set to 0
     const mealBoxCounts = {};
     const mealBoxes = await MealBox.findAll({ attributes: ["id", "name"] });
@@ -282,7 +358,6 @@ getKitchenSchedule = async (req, res, next) => {
       totalOrders[orderDate] += orderCount; // Update the total orders for the date
     });
 
-
     // Convert the schedule object to an array
     const formattedSchedule = Object.values(schedule);
 
@@ -293,6 +368,7 @@ getKitchenSchedule = async (req, res, next) => {
       orderByBox: Object.values(mealBoxCounts),
       totalOrders,
       dietTypeCounts: Object.values(dietTypeCounts),
+      mealTimeCounts: Object.values(mealTimeCounts),
     });
   } catch (e) {
     console.error("Error in getKitchenSchedule:", e);
@@ -354,6 +430,7 @@ pauseOrder = async (req, res, next) => {
 
 module.exports = {
   getOrders,
+  getOrdersList,
   getKitchenSchedule,
   pauseOrder
 };

@@ -36,13 +36,19 @@ module.exports = {
     //   WHERE deliveryType IS NULL;
     // `);
 
-    await queryInterface.addColumn("subscriptions", "selectedDates", {
-      type: Sequelize.JSON,
-      allowNull: true,
+    // await queryInterface.addColumn("subscriptions", "selectedDates", {
+    //   type: Sequelize.JSON,
+    //   allowNull: true,
+    // });
+    // await queryInterface.addColumn("temp_subscriptions", "selectedDates", {
+    //   type: Sequelize.JSON,
+    //   allowNull: true,
+    // });
+    await queryInterface.addColumn("pincodes", "description", {
+      type: Sequelize.STRING,
     });
-    await queryInterface.addColumn("temp_subscriptions", "selectedDates", {
-      type: Sequelize.JSON,
-      allowNull: true,
+    await queryInterface.addColumn("coupons", "description", {
+      type: Sequelize.STRING,
     });
   },
 

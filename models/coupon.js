@@ -8,6 +8,10 @@ const Coupon = db.define(
       type: Sequelize.STRING,
       required: true,
     },
+	description: {
+		type: Sequelize.STRING,
+		required: false,
+	},
     value: {
       type: Sequelize.DECIMAL(10,2),
       required: true,
