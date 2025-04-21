@@ -10,6 +10,7 @@ const couponRouter = require('./routes/coupons');
 const holidayRouter = require('./routes/holiday');
 const pincodeRouter = require('./routes/pincode');
 const paymentRouter = require('./routes/payment');
+const analyticsRouter = require('./routes/analytics');
 const webhook = require('./routes/webhook');
 const { API_VERSION } = require('./constants')
 
@@ -49,6 +50,7 @@ app.use(`/api/${API_VERSION.V1}/coupons`, couponRouter)
 app.use(`/api/${API_VERSION.V1}/holidays`, holidayRouter)
 app.use(`/api/${API_VERSION.V1}/pincodes`, pincodeRouter)
 app.use(`/api/${API_VERSION.V1}/payments`, paymentRouter)
+app.use(`/api/${API_VERSION.V1}/analytics`, analyticsRouter)
 app.use(`/webhook`, webhook)
 
 

@@ -2,6 +2,7 @@ const Sequelize = require("sequelize");
 const Customer = require("./customer");
 const db = require("../db/sequelize");
 const MealBox = require("./mealBox");
+const Transaction = require("./transaction");
 
 const Subscription = db.define(
   "subscriptions",
@@ -54,6 +55,7 @@ const Subscription = db.define(
 		orderId: {
 			type: Sequelize.STRING,
 			required: true,
+			unique: true,
 		},
 		cuisineChoice: {
 			type: Sequelize.JSON,
@@ -80,5 +82,6 @@ Customer.hasMany(Subscription, { foreignKey: "customerId", onDelete: "CASCADE" }
 Subscription.belongsTo(Customer, { foreignKey: "customerId" });
 MealBox.hasMany(Subscription, { foreignKey: "boxId", onDelete: "CASCADE" });
 Subscription.belongsTo(MealBox, { foreignKey: "boxId", as: "box" });
-
+Subscription.hasMany(Transaction, { foreignKey: 'orderId', sourceKey: 'orderId', onDelete: "CASCADE" });
+Transaction.belongsTo(Subscription, { foreignKey: 'orderId', targetKey: 'orderId', onDelete: "CASCADE", as: 'transactions' });
 module.exports = Subscription;

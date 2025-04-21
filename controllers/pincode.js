@@ -1,4 +1,4 @@
-const MealBox = require("../models/pincode");
+const Pincode = require("../models/pincode");
 const Sequelize = require("sequelize");
 
 // to get pagination information
@@ -19,7 +19,7 @@ getPagingData = (data, page, limit) => {
 
 create = async (req, res, next) => {
   try {
-    await MealBox.create(req.body);
+    await Pincode.create(req.body);
     res.status(200).json({
       success: true,
       message: "Pincode created successfully",
@@ -32,27 +32,35 @@ create = async (req, res, next) => {
 
 list = async (req, res, next) => {
 
-	const { page, size } = req.query;
+	const { page, size, code } = req.query;
   console.log(" page ", page, size);
   const { limit, offset } = getPagination(page, size);
   console.log(" limit ", limit);
   console.log("offset", offset)
-	const pincodes = await MealBox.findAll({ where: { isDeleted: false }, limit, offset });
-	const totalBoxes = await MealBox.count({ where: { isDeleted: false } });
+  const  whereCondition = {
+    isDeleted: false
+  }
+  if(code) {
+    whereCondition.code = { 
+      [Sequelize.Op.like]: `%${code}%`
+    }
+  }
+	const pincodes = await Pincode.findAll({ where: whereCondition, limit, offset, order: [["code", "ASC"]] });
+	const totalPincodes = await Pincode.count({ where: whereCondition });
 	res.status(200).json({
 		success: true,
     pincodes,
-    count: totalBoxes,
+    count: totalPincodes,
     currentPage: page ? +page : 0,
-    totalPages: Math.ceil(totalBoxes / limit),
+    totalPages: Math.ceil(totalPincodes / limit),
 	})
 }
 
 getBoxDetails = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const mealBox = await MealBox.findOne({ where: { id } });
-    if (!mealBox) {
+    const pincode = await Pincode.findOne({ where: { id } });
+    if (!pincode) {
       res.status(404).json({
         success: false,
         message: "Pincode not found",
@@ -60,7 +68,7 @@ getBoxDetails = async (req, res, next) => {
     }
     res.status(200).json({
       success: true,
-      data: mealBox,
+      data: pincode,
     });
   } catch (e) {
     next(e);
@@ -73,15 +81,15 @@ updateBoxDetails = async (req, res, next) => {
     console.log(" req body ", req.body)
     const { email, password, firstName, lastName, phoneNumber, role, status } =
       req.body;
-    const mealBox = await MealBox.findOne({ where: { id } });
-    if (!mealBox) {
+    const pincode = await Pincode.findOne({ where: { id } });
+    if (!pincode) {
       return res.status(404).json({
         success: false,
         message: "Pincode not found",
       });
     }
-    console.log(" user ", mealBox);
-    await MealBox.update(req.body, { where: { id: id } });
+    console.log(" user ", pincode);
+    await Pincode.update(req.body, { where: { id: id } });
     res.status(200).json({
       success: true,
       message: "Pincode updated successfully",
@@ -95,7 +103,7 @@ updateBoxDetails = async (req, res, next) => {
 checkAvailability = async (req, res, next) => {	
 		try {
 		const { pincode } = req.query;
-		const pinCodeFound = await MealBox.findOne({ where: { code: pincode, isDeleted: false } });
+		const pinCodeFound = await Pincode.findOne({ where: { code: pincode, isDeleted: false } });
 		if (!pinCodeFound) {
 			res.status(404).json({
 				success: false,
@@ -115,14 +123,14 @@ checkAvailability = async (req, res, next) => {
 deletePincode = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const mealBox = await MealBox.findOne({ where: { id } });
-    if (!mealBox) {
+    const pincode = await Pincode.findOne({ where: { id } });
+    if (!pincode) {
       return res.status(404).json({
         success: false,
         message: "Pincode not found",
       });
     }
-    await MealBox.update({ isDeleted: true }, { where: { id: id } });
+    await Pincode.update({ isDeleted: true }, { where: { id: id } });
     res.status(200).json({
       success: true,
       message: "Pincode deleted successfully",
@@ -139,5 +147,5 @@ module.exports = {
   getBoxDetails,
   updateBoxDetails,
 	checkAvailability,
-  deletePincode
+  deletePincode,
 }

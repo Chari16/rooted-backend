@@ -80,8 +80,8 @@ createOrder = async (req, res, next) => {
     }
 
     const instance = new Razorpay({
-      key_id: "rzp_test_wX9is0g9eug5V3",
-      key_secret: "SeBUQOo8QEKEY75gqH36NX5E",
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_SECRET,
     });
 
     const order = await instance.orders.create({ amount: amount * 100, currency: "INR" });
@@ -159,8 +159,8 @@ createNewOrder = async (req, res, next) => {
     }
 
     const instance = new Razorpay({
-      key_id: "rzp_test_wX9is0g9eug5V3",
-      key_secret: "SeBUQOo8QEKEY75gqH36NX5E",
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_SECRET,
     });
 
     const order = await instance.orders.create({ amount: amount * 100, currency: "INR" });
@@ -602,6 +602,48 @@ oldPaymentSuccess = async (req, res, next) => {
     });
 }
 
+getRevenue = async (req, res, next) => {
+  try {
+    const { period } = req.query; // Accept 'daily', 'weekly', or 'monthly' as a query parameter
+
+    let groupByFormat;
+    switch (period) {
+      case "daily":
+        groupByFormat = Sequelize.fn("DATE", Sequelize.col("createdAt")); // Group by day
+        break;
+      case "weekly":
+        groupByFormat = Sequelize.fn("YEARWEEK", Sequelize.col("createdAt")); // Group by week
+        break;
+      case "monthly":
+        groupByFormat = Sequelize.fn("DATE_FORMAT", Sequelize.col("createdAt"), "%Y-%m"); // Group by month
+        break;
+      default:
+        return res.status(400).json({
+          success: false,
+          message: "Invalid period. Use 'daily', 'weekly', or 'monthly'.",
+        });
+    }
+
+    // Query to calculate total revenue
+    const revenueData = await Transaction.findAll({
+      attributes: [
+        [groupByFormat, "period"], // Group by the selected period
+        [Sequelize.fn("SUM", Sequelize.col("amount")), "totalRevenue"], // Sum the revenue
+      ],
+      group: "period", // Group by the calculated period
+      order: [[Sequelize.literal("period"), "ASC"]], // Order by period
+    });
+
+    res.status(200).json({
+      success: true,
+      data: revenueData,
+    });
+  } catch (error) {
+    console.error("Error calculating revenue:", error);
+    next(error);
+  }
+};
+
 module.exports = {
   list,
   createOrder,
@@ -609,4 +651,5 @@ module.exports = {
   webhook,
   paymentSuccess,
   paymentFailed,
+  getRevenue
 };

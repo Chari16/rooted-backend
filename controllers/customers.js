@@ -162,12 +162,6 @@ login = async (req, res, next) => {
       );
     }
 
-    res.status(200).json({
-      success: true,
-      message: "OTP sent successfully"
-    });
-
-
     const data = {
       "to": `91${phoneNumber}`,
       "type": "template",
@@ -257,6 +251,7 @@ googleLogin = async (req, res, next) => {
       res.status(200).json({
         success: true,
         message: "Google login success with new customer",
+        data: newCustomer,
         token: token,
       });
     }
@@ -266,6 +261,7 @@ googleLogin = async (req, res, next) => {
       res.status(200).json({
         success: true,
         message: "Google login success",
+        data: customer,
         token: jwtToken,
       });
     }
@@ -301,6 +297,7 @@ facebookLogin = async (req, res, next) => {
       res.status(200).json({
         success: true,
         message: "Facebook login success with new customer",
+        data: newCustomer,
         token: token,
       });
     }
@@ -309,6 +306,7 @@ facebookLogin = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: "Facebook login success",
+      data: customer,
       token: token,
     });
   } catch (e) {

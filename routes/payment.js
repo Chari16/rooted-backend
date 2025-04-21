@@ -9,5 +9,6 @@ router.post('/create-order', paymentController.createNewOrder)
 
 router.post('/success', paymentController.paymentSuccess)
 router.post('/failed', paymentController.paymentFailed)
+router.get('/revenue', paymentController.getRevenue)
 
 module.exports = router;

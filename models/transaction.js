@@ -1,7 +1,8 @@
 const Sequelize = require("sequelize");
+const Subscription = require("./subscription");
 const db = require("../db/sequelize");
 
-const Order = db.define(
+const Transaction = db.define(
   "transactions",
   {
     customerId: {
@@ -51,4 +52,4 @@ const Order = db.define(
   }
 );
 
-module.exports = Order;
+module.exports = Transaction;

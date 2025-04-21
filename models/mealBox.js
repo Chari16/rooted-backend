@@ -32,6 +32,10 @@ const MealBox = db.define(
       type: Sequelize.INTEGER,
       required: true,
     },
+    trialPrice: {
+      type: Sequelize.INTEGER,
+      required: true,
+    },
     isDeleted: {
       type: Sequelize.BOOLEAN,
       required: true,

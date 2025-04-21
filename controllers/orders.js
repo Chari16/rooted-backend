@@ -1,4 +1,5 @@
 const { Sequelize } = require("sequelize");
+const ExcelJS = require('exceljs');
 const {
   Order,
   MealBox,
@@ -428,9 +429,84 @@ pauseOrder = async (req, res, next) => {
   }
 }
 
+downloadOrdersExcel = async (req, res, next) => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    // Fetch orders (same logic as getOrdersList)
+    const orders = await Order.findAll({
+      where: {
+        orderDate: {
+          [Op.between]: [new Date(startDate), new Date(endDate)], // Filter by date range
+        },
+      },
+      include: [
+        {
+          model: MealBox,
+          as: 'box',
+        },
+        {
+          model: Cuisine,
+          as: 'cuisine',
+        },
+        {
+          model: Subscription,
+          as: 'subscription',
+        },
+        {
+          model: Customer,
+          as: 'customer',
+        },
+      ],
+    });
+
+    // Create a new workbook and worksheet
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Orders');
+
+    // Add headers to the worksheet
+    worksheet.columns = [
+      { header: 'Order Date', key: 'orderDate', width: 20 },
+      { header: 'Box Size', key: 'boxSize', width: 20 },
+      { header: 'Diet Type', key: 'dietType', width: 20 },
+      { header: 'Cuisine', key: 'cuisine', width: 20 },
+      { header: 'Customer Name', key: 'customerName', width: 30 },
+    ];
+
+    // Add rows to the worksheet
+    orders.forEach((order) => {
+      worksheet.addRow({
+        orderDate: new Date(order.orderDate).toLocaleDateString('en-GB'),
+        boxSize: order.box?.name || 'N/A',
+        dietType: order.subscription?.dietType || 'N/A',
+        cuisine: order.cuisine?.name || 'N/A',
+        customerName: `${order.customer?.firstName || ''} ${order.customer?.lastName || ''}`.trim(),
+      });
+    });
+
+    // Set the response headers for file download
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename=orders.xlsx'
+    );
+
+    // Write the workbook to the response
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error('Error generating Excel file:', error);
+    next(error);
+  }
+};
+
 module.exports = {
   getOrders,
   getOrdersList,
   getKitchenSchedule,
-  pauseOrder
+  pauseOrder,
+  downloadOrdersExcel
 };
