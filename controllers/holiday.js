@@ -32,13 +32,22 @@ create = async (req, res, next) => {
 
 list = async (req, res, next) => {
 
-	const { page, size } = req.query;
-  console.log(" page ", page, size);
+	const { page, size, search } = req.query;
+  console.log(" page ", page, size, search) ;
   const { limit, offset } = getPagination(page, size);
   console.log(" limit ", limit);
   console.log("offset", offset)
-	const holidays = await Holiday.findAll({ where: {  isDeleted: false }, limit, offset});
-	const totalBoxes = await Holiday.count({ where: { isDeleted: false } });
+  const whereCondition = {
+    isDeleted: false,
+  };
+
+  if (search) {
+    whereCondition[Sequelize.Op.or] = [
+      { name: { [Sequelize.Op.like]: `%${search}%` } },
+    ];
+  }
+	const holidays = await Holiday.findAll({ where: whereCondition, limit, offset});
+	const totalBoxes = await Holiday.count({ where: whereCondition });
 	res.status(200).json({
 		success: true,
     holidays,

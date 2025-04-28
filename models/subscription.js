@@ -3,6 +3,7 @@ const Customer = require("./customer");
 const db = require("../db/sequelize");
 const MealBox = require("./mealBox");
 const Transaction = require("./transaction");
+const Address = require("./address");
 
 const Subscription = db.define(
   "subscriptions",
@@ -55,7 +56,16 @@ const Subscription = db.define(
 		orderId: {
 			type: Sequelize.STRING,
 			required: true,
+			allowNull: false,
 			unique: true,
+		},
+		transactionId: {
+			type: Sequelize.INTEGER,
+			allowNull: true,
+			references: {
+			  model: "transactions", // References the transactions table
+			  key: "id",
+			},
 		},
 		cuisineChoice: {
 			type: Sequelize.JSON,
@@ -72,6 +82,15 @@ const Subscription = db.define(
 			required: false,
 			allowNull: true
 		},
+		addressId: {
+			type: Sequelize.INTEGER,
+			allowNull: true,
+			references: {
+			model: "address", // References the customers table
+			key: "id",
+			},
+			onDelete: "CASCADE", //
+		}
   },
   {
     freezeTableName: true,
@@ -80,8 +99,14 @@ const Subscription = db.define(
 
 Customer.hasMany(Subscription, { foreignKey: "customerId", onDelete: "CASCADE" });
 Subscription.belongsTo(Customer, { foreignKey: "customerId" });
+
 MealBox.hasMany(Subscription, { foreignKey: "boxId", onDelete: "CASCADE" });
 Subscription.belongsTo(MealBox, { foreignKey: "boxId", as: "box" });
-Subscription.hasMany(Transaction, { foreignKey: 'orderId', sourceKey: 'orderId', onDelete: "CASCADE" });
-Transaction.belongsTo(Subscription, { foreignKey: 'orderId', targetKey: 'orderId', onDelete: "CASCADE", as: 'transactions' });
+
+Transaction.hasOne(Subscription, { foreignKey: 'transactionId', as: 'subscription' });
+Subscription.belongsTo(Transaction, { foreignKey: 'transactionId', as: 'transaction' });
+
+Address.hasOne(Subscription, { foreignKey: "addressId", as: "subscription" });
+Subscription.belongsTo(Address, { foreignKey: "addressId", as: "address" });
+
 module.exports = Subscription;

@@ -11,8 +11,9 @@ const Transaction = db.define(
     },
     orderId: {
       type: Sequelize.STRING,
-      allowNull: false,
-			unique: true
+      required: true,
+      allowNull: true,
+      unique: true,
     },
     status: {
       type: Sequelize.STRING,

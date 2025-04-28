@@ -8,6 +8,7 @@ const {
   Subscription,
 } = require("../models");
 const { calculateRefund } = require("../utils/formulas");
+const Address = require("../models/address");
 const Op = Sequelize.Op;
 
 getOrders = async (req, res, next) => {
@@ -150,6 +151,12 @@ getOrdersList = async (req, res, next) => {
         {
           model: Subscription, // Include Subscription model
           as: "subscription", // Alias for the association
+          include: [
+            {
+              model: Address,
+              as: "address",
+            },
+          ],
         },
         { model: Customer, as: "customer" },
       ],
@@ -452,6 +459,12 @@ downloadOrdersExcel = async (req, res, next) => {
         {
           model: Subscription,
           as: 'subscription',
+          include: [
+            {
+              model: Address,
+              as: "address",
+            },
+          ],
         },
         {
           model: Customer,
@@ -466,21 +479,31 @@ downloadOrdersExcel = async (req, res, next) => {
 
     // Add headers to the worksheet
     worksheet.columns = [
+      { header: 'Customer ID', key: 'customerNo', width: 20 },
       { header: 'Order Date', key: 'orderDate', width: 20 },
       { header: 'Box Size', key: 'boxSize', width: 20 },
       { header: 'Diet Type', key: 'dietType', width: 20 },
       { header: 'Cuisine', key: 'cuisine', width: 20 },
+      { header: 'Status', key: 'status', width: 20 },
       { header: 'Customer Name', key: 'customerName', width: 30 },
+      { header: 'Pincode', key: 'pincode', width: 30 },
+      { header: 'Address', key: 'address', width: 30 },
+      { header: 'City', key: 'city', width: 30 },
     ];
 
     // Add rows to the worksheet
     orders.forEach((order) => {
       worksheet.addRow({
+        customerNo: order.customer?.customerNo || 'N/A',
         orderDate: new Date(order.orderDate).toLocaleDateString('en-GB'),
         boxSize: order.box?.name || 'N/A',
         dietType: order.subscription?.dietType || 'N/A',
         cuisine: order.cuisine?.name || 'N/A',
+        status: order.status || 'N/A',
         customerName: `${order.customer?.firstName || ''} ${order.customer?.lastName || ''}`.trim(),
+        pincode: order.subscription?.address?.pincode || 'N/A',
+        address: `${order.subscription?.address?.address1 || ''} ${order.subscription?.address?.address2 || ''}`.trim(),
+        city: order.subscription?.address?.city || 'N/A',
       });
     });
 
@@ -503,10 +526,62 @@ downloadOrdersExcel = async (req, res, next) => {
   }
 };
 
+getTrialMeals = async(req, res, next) => {
+  try {
+    const { startDate, endDate } = req.query;
+    const orders = await Order.findAll({
+      where: {
+        orderDate: {
+          [Op.between]: [new Date(startDate), new Date(endDate)], // Filter by date range
+        },
+      },
+      include: [
+        {
+          model: MealBox,
+          as: 'box',
+          attributes: ['name'],
+        },
+        {
+          model: Cuisine,
+          as: 'cuisine',
+          attributes: ['name', 'itemCode'],
+        },
+        {
+          model: Subscription,
+          as: 'subscription',
+          where: {
+            subscriptionType: 'trial',
+          },
+          attributes: ['id', 'subscriptionType', 'amount', 'dietType'],
+          include: [
+            {
+              model: Address,
+              as: 'address',
+            },
+          ],
+        },
+        {
+          model: Customer,
+          as: 'customer',
+          attributes: ['id', 'firstName', 'lastName', 'phoneNumber'],
+        },
+      ],
+    });
+
+    res.status(200).json({
+      success: true,
+      orders,
+    });
+  } catch (e) {
+    next(e);
+  }
+}
+
 module.exports = {
   getOrders,
   getOrdersList,
   getKitchenSchedule,
   pauseOrder,
-  downloadOrdersExcel
+  downloadOrdersExcel,
+  getTrialMeals
 };

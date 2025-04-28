@@ -23,12 +23,17 @@ create = async (req, res, next) => {
 };
 
 list = async (req, res, next) => {
-	const { page, size } = req.query;
+	const { page, size, search } = req.query;
   console.log(" page ", page, size);
   const { limit, offset } = getPagination(page, size);
   console.log(" limit ", limit);
   console.log("offset", offset)
-	const cuisines = await Cuisine.findAll({ limit, offset });
+  const whereCondition = {}
+  if (search) {
+    whereCondition.name = { [Op.like]: `%${search}%` }
+  }
+
+	const cuisines = await Cuisine.findAll({ where: whereCondition, limit, offset });
 	const totalCuisine = await Cuisine.count();
 	res.status(200).json({
 		success: true,

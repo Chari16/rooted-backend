@@ -23,12 +23,21 @@ create = async (req, res, next) => {
 };
 
 list = async (req, res, next) => {
-  const { page, size } = req.query;
-  console.log(" page ", page, size);
+  const { page, size, search } = req.query;
+  console.log(" page ", page, size , search);
   const { limit, offset } = getPagination(page, size);
   console.log(" limit ", limit);
   console.log("offset", offset);
-  const coupons = await Coupon.findAll({ limit, offset });
+  const whereCondition = {
+  };
+  if(search) {
+    whereCondition = {
+      code: {
+        [Sequelize.Op.like]: `%${search}%`
+      }
+    }
+  }
+  const coupons = await Coupon.findAll({ where: whereCondition ,limit, offset, order: [["createdAt", "DESC"]] });
   const totalCoupon = await Coupon.count();
   res.status(200).json({
     success: true,

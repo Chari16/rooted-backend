@@ -67,6 +67,11 @@ const TempSubscription = db.define(
 			type: Sequelize.JSON,
 			required: false,
 			allowNull: true
+		},
+		addressId: {
+			type: Sequelize.INTEGER,
+			required: false,
+			allowNull: true
 		}
   },
   {

@@ -11,7 +11,7 @@ const DIET_TYPE = {
 const MEAL_SUBSCRIPTION = {
   monthly: "Monthly",
   weekly: "Weekly",
-  oneDay: "OneDay"
+  oneDay: "trial"
 };
 
 const WEEKEND_TYPE = {

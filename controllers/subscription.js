@@ -9,6 +9,7 @@ const Sequelize = require("sequelize");
 const { checkHoliday } = require("../utils/date");
 const CircularLinkedList = require("../utils/linkedList");
 const { Holiday } = require("../models");
+const Address = require("../models/address");
 const Op = Sequelize.Op;
 
 // Task to do:
@@ -62,7 +63,12 @@ list = async (req, res, next) => {
         model: MealBox, 
         as: "box",
       },
+      {
+        model: Address,
+        as: 'address'
+      }
     ],
+    order: [["createdAt", "DESC"]],
    },
   );
   const totalCount = await Subscription.count();

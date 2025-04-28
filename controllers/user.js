@@ -142,13 +142,24 @@ create = async (req, res, next) => {
 };
 
 list = async (req, res, next) => {
-	const { page, size } = req.query;
+	const { page, size, search } = req.query;
   console.log(" page ", page, size);
   const { limit, offset } = getPagination(page, size);
   console.log(" limit ", limit);
   console.log("offset", offset)
-	const users = await User.findAll({ where: { id: { [Op.ne]: req.user.id } }, limit, offset });
-	const totalUsers = await User.count({ where: { id: { [Op.ne]: req.user.id } }});
+  const whereCondition = {
+    id: { [Op.ne]: req.user.id, },
+    role: { [Op.ne]: "super_admin" },
+  }
+  if(search) {
+    whereCondition[Op.or] = [
+      { firstName: { [Op.like]: `%${search}%` } },
+      { lastName: { [Op.like]: `%${search}%` } },
+      { role: { [Op.like]: `%${search}%` } },
+    ]
+  }
+	const users = await User.findAll({ where: whereCondition, limit, offset });
+	const totalUsers = await User.count({ where: whereCondition });
 	res.status(200).json({
 		success: true,
     users,

@@ -47,12 +47,20 @@ create = async (req, res, next) => {
 };
 
 list = async (req, res, next) => {
-  const { page, size } = req.query;
+  const { page, size, search } = req.query;
   console.log(" page ", page, size);
   const { limit, offset } = getPagination(page, size);
   console.log(" limit ", limit);
   console.log("offset", offset);
-  const customers = await Customer.findAll({ limit, offset });
+  const whereCondition = {}
+  if (search) {
+    whereCondition[Sequelize.Op.or] = [
+      { firstName: { [Sequelize.Op.like]: `%${search}%` } },
+      { lastName: { [Sequelize.Op.like]: `%${search}%` } },
+    ]
+  }
+
+  const customers = await Customer.findAll({ where: whereCondition, limit, offset });
   const totalCustomers = await Customer.count();
   res.status(200).json({
     success: true,

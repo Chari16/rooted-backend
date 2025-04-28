@@ -7,6 +7,7 @@ const TempSubscription = require("../models/tempSubscription");
 const { Subscription, Holiday, Order, MealBox, Customer } = require("../models");
 const CircularLinkedList = require("../utils/linkedList");
 const { checkHoliday } = require("../utils/date");
+const Address = require("../models/address");
 const Op = Sequelize.Op;
 
 // to get pagination information
@@ -58,8 +59,26 @@ createOrder = async (req, res, next) => {
       itemNames,
       walletAmount,
       couponCode,
-      selectedDates // [] of string
-     } = req.body;
+      selectedDates, // [] of string
+      address1,
+      address2,
+      department,
+      designation,
+      city,
+      state,
+      pincode,
+    } = req.body;
+    // add new customer address entry here - todo
+    // later we can use values from payload
+    const address = await Address.create({ 
+      address1: "test",
+      address2: "test",
+      department: "test",
+      designation: "test",
+      city: "Mumbai",
+      state: "Maharashtra",
+      pincode: "400002",
+    });
 
     const subscription = await Subscription.findOne({
       where: { customerId: customerId, status: 'active' },
@@ -100,7 +119,8 @@ createOrder = async (req, res, next) => {
       itemCode,
       itemNames,
       orderId: order.id,
-      selectedDates
+      selectedDates,
+      addressId: address.id,
     });
     await Transaction.create({
       customerId: customerId,
@@ -137,9 +157,27 @@ createNewOrder = async (req, res, next) => {
       itemNames,
       walletAmount,
       couponCode,
-      selectedDates // [] of string
+      selectedDates,// [] of string
+      address1,
+      address2,
+      department,
+      designation,
+      city,
+      state,
+      pincode,
     } = req.body;
     console.log(" selected dates ", selectedDates)
+    // add new customer address entry here - todo
+    // later we can use values from payload
+    const address = await Address.create({ 
+      address1: "test",
+      address2: "test",
+      department: "test",
+      designation: "test",
+      city: "Mumbai",
+      state: "Maharashtra",
+      pincode: "400002",
+    });
 
     const subscription = await Subscription.findOne({
       where: { customerId: customerId, status: 'active' },
@@ -179,7 +217,8 @@ createNewOrder = async (req, res, next) => {
       itemCode,
       itemNames,
       orderId: order.id,
-      selectedDates
+      selectedDates,
+      addressId: address.id,
     });
     await Transaction.create({
       customerId: customerId,
@@ -248,7 +287,7 @@ paymentSuccess = async (req, res, next) => {
     console.log(" tempSub ", tempSub);
 
     const {amount, weekendType, status, boxId, itemNames, subscriptionType, dietType, deliveryType, startDate, endDate, customerId, itemCode, orderId, selectedDates  } = tempSub
-    const subscription = await Subscription.create({ amount, weekendType, status, boxId, itemNames, subscriptionType, deliveryType, dietType, startDate, endDate, customerId, itemCode, orderId, cuisineChoice: tempSub.cuisineChoice, selectedDates });
+    const subscription = await Subscription.create({ amount, weekendType, status, boxId, itemNames, subscriptionType, deliveryType, dietType, startDate, endDate, customerId, itemCode, orderId, cuisineChoice: tempSub.cuisineChoice, selectedDates, transactionId: transaction.id, addressId: tempSub.addressId });
 
     await Customer.update({ wallet: customer.wallet - transaction.walletAdjusted }, { where: { id: transaction.customerId } });
 

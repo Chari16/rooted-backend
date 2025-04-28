@@ -1,5 +1,6 @@
 const Sequelize = require("sequelize");
 const db = require("../db/sequelize");
+const Address = require("./address");
 
 const Customer = db.define(
   "customers",
@@ -113,5 +114,8 @@ Customer.beforeCreate(async (customer, options) => {
     customer.customerNo = "ROOTED0001";
   }
 });
+
+Customer.hasMany(Address, { foreignKey: "customerId", as: "address" });
+Address.belongsTo(Customer, { foreignKey: "customerId", as: "customer" });
 
 module.exports = Customer;
