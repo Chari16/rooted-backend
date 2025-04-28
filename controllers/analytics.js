@@ -291,7 +291,7 @@ mostOrderedCuisineAndMeal = async(req, res, next) => {
           required: false, // Use LEFT OUTER JOIN to include MealBoxes with no subscriptions
         },
       ],
-      group: ["MealBox.id"], // Group by MealBox ID
+      group: ["mealBox.id"], // Group by MealBox ID
       order: [[Sequelize.fn("COUNT", Sequelize.col("subscriptions.id")), "DESC"]],
     });
 

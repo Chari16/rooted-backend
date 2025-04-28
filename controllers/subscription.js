@@ -71,7 +71,11 @@ list = async (req, res, next) => {
     order: [["createdAt", "DESC"]],
    },
   );
-  const totalCount = await Subscription.count();
+  const totalCount = await Subscription.count({
+    where: {
+      customerId: req.params.userId
+    },
+  });
   res.status(200).json({
     success: true,
     subscriptions,
