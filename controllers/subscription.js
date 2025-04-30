@@ -6,7 +6,7 @@ const Subscription = require("../models/subscription");
 const SubscriptionMap = require("../models/subscriptionMap");
 const MealBox = require("../models/mealBox");
 const Sequelize = require("sequelize");
-const { checkHoliday } = require("../utils/date");
+const { checkHoliday, convertToUTC } = require("../utils/date");
 const CircularLinkedList = require("../utils/linkedList");
 const { Holiday } = require("../models");
 const Address = require("../models/address");
@@ -376,10 +376,12 @@ getUserSubscriptions = async (req, res, next) => {
 };
 
 getActiveSubscription = async (req, res, next) => {
-  const { startDate } = req.body;
+  const { startDate, deliveryType } = req.body;
   const { id } = req.params;
+  const convertedStartDate = convertToUTC(startDate)
+  // find any subscription for which we have conflicting start date and end date
   const subscription = await Subscription.findOne({
-    where: { customerId: id, status: 'active' },
+    where: { customerId: id, status: 'active', deliveryType},
     order: [["createdAt", "DESC"]], // Order by createdAt in descending order
   });
   // check if endDate is greater than current date
@@ -389,6 +391,17 @@ getActiveSubscription = async (req, res, next) => {
       message: "No subscription for this user",
       status: "no_subscriptions",
     });
+  }
+  if(subscription) {
+    // check if the existing subscription startDate and endDate is between the new start date 
+    if(new Date(subscription.startDate) <= new Date(convertedStartDate) && new Date(subscription.endDate) >= new Date(convertedStartDate)) {
+      return res.status(200).json({
+        success: true,
+        status: 'active',
+        message: "Subscription already active",
+        subscription,
+      });
+    }
   }
   if (subscription && new Date(subscription.endDate) > new Date(startDate)) {
     return res.status(200).json({

@@ -563,7 +563,7 @@ getTrialMeals = async(req, res, next) => {
         {
           model: Customer,
           as: 'customer',
-          attributes: ['id', 'firstName', 'lastName', 'phoneNumber'],
+          attributes: ['id', 'firstName', 'lastName', 'phoneNumber', 'customerNo'],
         },
       ],
     });

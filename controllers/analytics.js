@@ -4,6 +4,8 @@ const Address = require("../models/address");
 const Subscription = require("../models/subscription");
 const Transaction = require("../models/transaction");
 const Sequelize = require("sequelize");
+const { corporateTemplate, feedbackTemplate } = require("../utils/mailTransporter");
+const { SUBJECT } = require("../constants");
 
 sales = async (req, res, next) => {
   try {
@@ -402,65 +404,57 @@ pausedOrdersCount = async(req, res, next) => {
     next(e);
   }
 }
-// Reachout.rootedtoyou.com
-// mrby fhmp tbrc jjow
+
 sendMail = async (req, res, next) => {
   const { formType, name, email, phoneNumber, companyName, designation, message } = req.body 
   const payload = {}
-  const transporter = nodemailer.createTransport({
-    service: "gmail", // Use your email service (e.g., Gmail, Outlook, etc.)
-    auth: {
-      user: "bizdev@rootedtoyou.com", // Your email address
-      pass: "yczz joax astr ffxf", // Your email password or app-specific password
-    },
-  });
 
-  const transporter2 = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: "reachout@rootedtoyou.com",
-      pass: "mrby fhmp tbrc jjow",
-    }
-  })
-
-  const mailOptions = {
-    from: "bizdev@rootedtoyou.com", // Sender address
-    to, // Recipient address
-    subject, // Subject line
-    text, // Plain text body
-    // html, // HTML body (optional)
-  };
-
-  console.log("Email sent:", info.response);
   if(formType === "contact") {
     payload.name = name
     payload.email = email
     payload.phoneNumber = phoneNumber
     payload.message = message
 
-    const fromOptions = {
-
-    }
-    // send email to admin
-    transporter.sendMail(fromOptions);
-
-    // send email to user
+    const transporter = nodemailer.createTransport({
+      service: "gmail", // Use your email service (e.g., Gmail, Outlook, etc.)
+      auth: {
+        user: "reachout@rootedtoyou.com",
+        pass: "mrby fhmp tbrc jjow",
+      }
+    });
     const toOptions = {
       from: "reachout@rootedtoyou.com", // Sender address
-      to: payload.email, // Recipient address
-      subject: "", // Subject line
-      text: "", // Plain text body
+      to: "reachout@rootedtoyou.com", // Recipient address
+      subject: SUBJECT.CONTACT, // Subject line
+      text: feedbackTemplate(payload), // Plain text body
     }
+
     transporter.sendMail(toOptions);
-
-
   }
+
   if(formType === "feedback") {
     // send feedback email
     payload.name = name
     payload.email = email
     payload.message = message
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail", // Use your email service (e.g., Gmail, Outlook, etc.)
+      auth: {
+        user: "reachout@rootedtoyou.com",
+        pass: "mrby fhmp tbrc jjow",
+      }
+    });
+    const toOptions = {
+      from: "reachout@rootedtoyou.com", // Sender address
+      to: "reachout@rootedtoyou.com", // Recipient address
+      subject: SUBJECT.CORPORATE, // Subject line
+      text: feedbackTemplate(payload), // Plain text body
+    }
+
+    transporter.sendMail(toOptions);
   }
+
   if(formType === "corporate") {
     // send subscription email
     payload.name = name
@@ -469,11 +463,25 @@ sendMail = async (req, res, next) => {
     payload.companyName = companyName
     payload.designation = designation
     payload.message = message
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail", // Use your email service (e.g., Gmail, Outlook, etc.)
+      auth: {
+        user: "bizdev@rootedtoyou.com", // Your email address
+        pass: "yczz joax astr ffxf", // Your email password or app-specific password
+      },
+    });
+
+    const toOptions = {
+      from: "bizdev@rootedtoyou.com", // Sender address
+      to: "bizdev@rootedtoyou.com", // Recipient address
+      subject: SUBJECT.CORPORATE, // Subject line
+      text: corporateTemplate(payload), // Plain text body
+    }
+
+    transporter.sendMail(toOptions);
   }
 
-  const to = "bizdev@rootedtoyou.com"
-  const subject = "Test Email";
-  const text = "This is a test email sent using Node.js and Nodemailer.";
   try {
     res.status(200).json({
       success: true,

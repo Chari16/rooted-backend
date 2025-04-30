@@ -1,4 +1,5 @@
 const Sequelize = require("sequelize");
+const nodemailer = require("nodemailer");
 const { WEEKEND_TYPE } = require("../enums");
 const Transaction = require("../models/transaction");
 const Razorpay = require("razorpay");
@@ -6,8 +7,10 @@ const crypto = require('crypto');
 const TempSubscription = require("../models/tempSubscription");
 const { Subscription, Holiday, Order, MealBox, Customer } = require("../models");
 const CircularLinkedList = require("../utils/linkedList");
-const { checkHoliday } = require("../utils/date");
+const { checkHoliday, convertToUTC } = require("../utils/date");
 const Address = require("../models/address");
+const { subscriberTemplate } = require("../utils/mailTransporter");
+const { SUBJECT } = require("../constants");
 const Op = Sequelize.Op;
 
 // to get pagination information
@@ -170,30 +173,31 @@ createNewOrder = async (req, res, next) => {
     // add new customer address entry here - todo
     // later we can use values from payload
     const address = await Address.create({ 
-      address1: "test",
-      address2: "test",
+      address1: address1,
+      address2: address2,
       department: "test",
       designation: "test",
-      city: "Mumbai",
+      city: city,
       state: "Maharashtra",
-      pincode: "400002",
+      pincode: pincode,
     });
 
     const subscription = await Subscription.findOne({
-      where: { customerId: customerId, status: 'active' },
+      where: { customerId: customerId, status: 'active', deliveryType, },
       order: [["createdAt", "DESC"]], // Order by createdAt in descending order
     });
-    console.log(" subscription ===> ", subscription);
-    const newSubStartDate = new Date(startDate);
-    console.log(" newSubStartDate ", newSubStartDate);
-    console.log(" subscription end date ", subscription && new Date(subscription.endDate));
-    if (subscription && new Date(subscription.endDate) > newSubStartDate) {
-      console.log(" inside check block ")
-      return res.status(200).json({
-        success: true,
-        message: "Already have active subscription for this time period",
-        subscription,
-      });
+    console.log(" subscription ===> ", subscription); 
+    const newSubStartDate = convertToUTC(startDate);
+    // console.log(" newSubStartDate ", newSubStartDate);
+    // console.log(" subscription end date ", subscription && new Date(subscription.endDate));
+    if(subscription) {
+      if(new Date(subscription.startDate) <= new Date(newSubStartDate) && new Date(subscription.endDate) >= new Date(newSubStartDate)) { 
+        return res.status(200).json({
+          success: false,
+          message: "Already have active subscription for this time period",
+          subscription,
+        });
+      }
     }
 
     const instance = new Razorpay({
@@ -211,8 +215,8 @@ createNewOrder = async (req, res, next) => {
       deliveryType,
       weekendType,
       cuisineChoice,
-      startDate,
-      endDate,
+      startDate: convertToUTC(startDate),
+      endDate: convertToUTC(endDate),
       status,
       itemCode,
       itemNames,
@@ -282,12 +286,16 @@ paymentSuccess = async (req, res, next) => {
       { where: { orderId: orderCreationId } }
     );
     const tempSub = await TempSubscription.findOne({
-      where: { orderId: orderCreationId },
+      where: { orderId: orderCreationId }
     });
     console.log(" tempSub ", tempSub);
+    // get address details
+    const address = await Address.findOne({ where: { id: tempSub.addressId } });
+    // getb box details
+    const box = await MealBox.findOne({ where: { id: tempSub.boxId } });
 
     const {amount, weekendType, status, boxId, itemNames, subscriptionType, dietType, deliveryType, startDate, endDate, customerId, itemCode, orderId, selectedDates  } = tempSub
-    const subscription = await Subscription.create({ amount, weekendType, status, boxId, itemNames, subscriptionType, deliveryType, dietType, startDate, endDate, customerId, itemCode, orderId, cuisineChoice: tempSub.cuisineChoice, selectedDates, transactionId: transaction.id, addressId: tempSub.addressId });
+    const subscription = await Subscription.create({ amount, weekendType, status, boxId, itemNames, subscriptionType, deliveryType, dietType, startDate: convertToUTC(startDate), endDate: convertToUTC(endDate), customerId, itemCode, orderId, cuisineChoice: tempSub.cuisineChoice, selectedDates, transactionId: transaction.id, addressId: tempSub.addressId });
 
     await Customer.update({ wallet: customer.wallet - transaction.walletAdjusted }, { where: { id: transaction.customerId } });
 
@@ -305,6 +313,25 @@ paymentSuccess = async (req, res, next) => {
       choicesAvailable = true;
     }
     console.log(" list ", list);
+
+    // mail trigger logic
+    const transporter = nodemailer.createTransport({
+      service: "gmail", // Use your email service (e.g., Gmail, Outlook, etc.)
+      auth: {
+        user: "reachout@rootedtoyou.com",
+        pass: "mrby fhmp tbrc jjow",
+      }
+    });
+
+    const toOptions = {
+      from: "reachout@rootedtoyou.com", // Sender address
+      to: "reachout@rootedtoyou.com", // Recipient address
+      subject: SUBJECT.CORPORATE, // Subject line
+      text: subscriberTemplate(customer, address, subscription, box), // Plain text body
+    }
+
+    transporter.sendMail(toOptions);
+    // mail logic ends
 
     // new logic of creating orders with selected dates
     const dates = subscription.selectedDates;

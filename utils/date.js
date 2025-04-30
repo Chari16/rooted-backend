@@ -49,7 +49,16 @@ function checkHoliday(dateString, type) {
 	}
 }
 
+function convertToUTC (dateString) {
+  const month = new Date(dateString).getMonth();
+  const year = new Date(dateString).getFullYear();
+  const day = new Date(dateString).getDate();
+  const utcDate = new Date(Date.UTC(year, month, day, 0, 0, 0));
+  return utcDate
+}
+
 
 module.exports = {
   checkHoliday,
+  convertToUTC
 };

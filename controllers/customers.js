@@ -60,7 +60,7 @@ list = async (req, res, next) => {
     ]
   }
 
-  const customers = await Customer.findAll({ where: whereCondition, limit, offset });
+  const customers = await Customer.findAll({ where: whereCondition, limit, offset, order: [['createdAt', 'DESC']] });
   const totalCustomers = await Customer.count();
   res.status(200).json({
     success: true,

@@ -34,6 +34,13 @@ const DISCOUNT_TYPE = {
   percentage: 'percentage'
 }
 
+const SUBJECT = {
+  CORPORATE: "New Corporate Plan Inquiry Received!",
+  FEEDBACK: "Subscriber Feedback Just in!",
+  CONTACT: "New Contact Request!",
+  SUBSCRIPTION: "New Subscription confirmed"
+}
+
 module.exports = {
   API_VERSION,
   DIET_TYPE,
@@ -41,5 +48,6 @@ module.exports = {
 	WEEKEND_TYPE,
   LOGIN_TYPE,
   SMS_API_URL,
-  DISCOUNT_TYPE
+  DISCOUNT_TYPE,
+  SUBJECT
 };
