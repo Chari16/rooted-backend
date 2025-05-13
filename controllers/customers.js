@@ -1,3 +1,4 @@
+const logger = require("../logger");
 const { Sequelize, where } = require("sequelize");
 const axios = require("axios");
 const User = require("../models/user");
@@ -47,28 +48,36 @@ create = async (req, res, next) => {
 };
 
 list = async (req, res, next) => {
-  const { page, size, search } = req.query;
-  console.log(" page ", page, size);
-  const { limit, offset } = getPagination(page, size);
-  console.log(" limit ", limit);
-  console.log("offset", offset);
-  const whereCondition = {}
-  if (search) {
-    whereCondition[Sequelize.Op.or] = [
-      { firstName: { [Sequelize.Op.like]: `%${search}%` } },
-      { lastName: { [Sequelize.Op.like]: `%${search}%` } },
-    ]
-  }
+  try {
+    const { page, size, search } = req.query;
+    console.log(" page ", page, size);
+    const { limit, offset } = getPagination(page, size);
+    console.log(" limit ", limit);
+    console.log("offset", offset);
+    const whereCondition = {}
+    if (search) {
+      whereCondition[Sequelize.Op.or] = [
+        { firstName: { [Sequelize.Op.like]: `%${search}%` } },
+        { lastName: { [Sequelize.Op.like]: `%${search}%` } },
+      ]
+    }
+  
+    const customers = await Customer.findAll({ where: whereCondition, limit, offset, order: [['createdAt', 'DESC']] });
+    const totalCustomers = await Customer.count();
+    logger.info("Fetched customes list from admin");
 
-  const customers = await Customer.findAll({ where: whereCondition, limit, offset, order: [['createdAt', 'DESC']] });
-  const totalCustomers = await Customer.count();
-  res.status(200).json({
-    success: true,
-    customers,
-    count: totalCustomers,
-    currentPage: page ? +page : 0,
-    totalPages: Math.ceil(totalCustomers / limit),
-  });
+    res.status(200).json({
+      success: true,
+      customers,
+      count: totalCustomers,
+      currentPage: page ? +page : 0,
+      totalPages: Math.ceil(totalCustomers / limit),
+    });
+  }
+  catch (e) {
+    logger.error(`Error for customers list  ${e.message}`);
+    next(e);
+  }
 };
 
 getCustomerDetails = async (req, res, next) => {

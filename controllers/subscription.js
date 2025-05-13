@@ -1,3 +1,4 @@
+const logger = require("../logger");
 const { WEEKEND_TYPE } = require("../enums");
 const Order = require("../models/order");
 const Customer = require("../models/customer");
@@ -353,6 +354,7 @@ buySubscription = async (req, res, next) => {
     	data: subscription
     });
   } catch (e) {
+    logger.error(`Error Buying subscriptions for userId: ${req.customerId} - ${e.message}`);
     next(e);
   }
 };
@@ -360,62 +362,75 @@ buySubscription = async (req, res, next) => {
 getUserSubscriptions = async (req, res, next) => {
   const { userId } = req.params;
   const { page = 0, size = 10 } = req.query;
-  console.log(" page ", page, size);
-  const { limit, offset } = getPagination(page, size);
-  console.log(" limit ", limit);
-  console.log("offset", offset);
-  const subscriptions = await Subscription.findAll({ where: { customerId: userId }, limit, offset });
-  const totalCount = await Subscription.count({ where: { customerId: userId } });
-  res.status(200).json({
-    success: true,
-    subscriptions,
-    count: totalCount,
-    currentPage: page ? +page : 0,
-    totalPages: Math.ceil(totalCount / limit),
-  });
+  try {
+    console.log(" page ", page, size);
+    const { limit, offset } = getPagination(page, size);
+    console.log(" limit ", limit);
+    console.log("offset", offset);
+    const subscriptions = await Subscription.findAll({ where: { customerId: userId }, limit, offset });
+    const totalCount = await Subscription.count({ where: { customerId: userId } });
+    res.status(200).json({
+      success: true,
+      subscriptions,
+      count: totalCount,
+      currentPage: page ? +page : 0,
+      totalPages: Math.ceil(totalCount / limit),
+    });
+  }
+  catch(e) {
+    logger.error(`Error fetching subscriptions for userId: ${userId} - ${e.message}`);
+    next(e);
+  }
 };
 
 getActiveSubscription = async (req, res, next) => {
   const { startDate, deliveryType } = req.body;
   const { id } = req.params;
-  const convertedStartDate = convertToUTC(startDate)
-  // find any subscription for which we have conflicting start date and end date
-  const subscription = await Subscription.findOne({
-    where: { customerId: id, status: 'active', deliveryType},
-    order: [["createdAt", "DESC"]], // Order by createdAt in descending order
-  });
-  // check if endDate is greater than current date
-  if (!subscription) {
-    return res.status(404).json({
-      success: false,
-      message: "No subscription for this user",
-      status: "no_subscriptions",
+  try {
+
+    const convertedStartDate = convertToUTC(startDate)
+    // find any subscription for which we have conflicting start date and end date
+    const subscription = await Subscription.findOne({
+      where: { customerId: id, status: 'active', deliveryType},
+      order: [["createdAt", "DESC"]], // Order by createdAt in descending order
     });
-  }
-  if(subscription) {
-    // check if the existing subscription startDate and endDate is between the new start date 
-    if(new Date(subscription.startDate) <= new Date(convertedStartDate) && new Date(subscription.endDate) >= new Date(convertedStartDate)) {
+    // check if endDate is greater than current date
+    if (!subscription) {
+      return res.status(404).json({
+        success: false,
+        message: "No subscription for this user",
+        status: "no_subscriptions",
+      });
+    }
+    if(subscription) {
+      // check if the existing subscription startDate and endDate is between the new start date 
+      if(new Date(subscription.startDate) <= new Date(convertedStartDate) && new Date(subscription.endDate) >= new Date(convertedStartDate)) {
+        return res.status(200).json({
+          success: true,
+          status: 'active',
+          message: "Subscription already active",
+          subscription,
+        });
+      }
+    }
+    if (subscription && new Date(subscription.endDate) > new Date(startDate)) {
       return res.status(200).json({
         success: true,
-        status: 'active',
-        message: "Subscription already active",
+        status: 'expired',
+        message: "Subscription expired",
         subscription,
       });
     }
-  }
-  if (subscription && new Date(subscription.endDate) > new Date(startDate)) {
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
-      status: 'expired',
-      message: "Subscription expired",
+      status: 'active',
       subscription,
     });
   }
-  res.status(200).json({
-    success: true,
-    status: 'active',
-    subscription,
-  });
+  catch(e) {
+    logger.error(`Error fetching active subscription for userId: ${id} - ${e.message}`);
+    next(e)
+  }
 };
 
 cancelSubscription = async (req, res, next) => {

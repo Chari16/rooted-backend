@@ -30,6 +30,7 @@
     "nodemailer": "^6.10.1",
     "nodemon": "^2.0.7",
     "razorpay": "^2.9.6",
-    "sequelize": "^6.6.2"
+    "sequelize": "^6.6.2",
+    "winston": "^3.17.0"
   }
 }

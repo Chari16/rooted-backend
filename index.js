@@ -1,4 +1,6 @@
 const express = require('express')
+const requestLogger = require("./requestLogger");
+const logger = require('./logger')
 const middlewares = require('./middlewares/global')
 const userRouter = require('./routes/user');
 const cuisineRouter = require('./routes/cuisine');
@@ -35,6 +37,8 @@ app.use(middlewares)
 
 const port = process.env.PORT || 5000
 
+app.use(requestLogger);
+
 app.get('/', (req, res) => {
   res.send('Server is up')
 })
@@ -58,6 +62,9 @@ app.use(`/webhook`, webhook)
 app.use((err, req, res, next) => {
   console.log(" error ", err.stack)
   const stack = process.env.NODE_ENV === "development" ? err.stack : undefined
+  logger.error(
+    `Error: ${err.message} - Route: ${req.method} ${req.originalUrl} - Status: 500`
+  );
   res.status(500)
     .json({
       success: false,
