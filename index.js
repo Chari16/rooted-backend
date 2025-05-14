@@ -1,4 +1,5 @@
 const express = require('express')
+const cors = require('cors')
 const requestLogger = require("./requestLogger");
 const logger = require('./logger')
 const middlewares = require('./middlewares/global')
@@ -30,7 +31,7 @@ db.sync();
 
 
 const app = express()
-
+app.use(cors())
 app.use(express.urlencoded({ extended: true }))
 app.use(express.json())
 app.use(middlewares)
