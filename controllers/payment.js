@@ -249,110 +249,110 @@ paymentSuccess = async (req, res, next) => {
   logger.info(" payment success block ");
   try {
     // getting the details back from our font-end
-    // const {
-    //   orderCreationId,
-    //   razorpayPaymentId,
-    //   razorpaySignature,
-    // } = req.body;
+    const {
+      orderCreationId,
+      razorpayPaymentId,
+      razorpaySignature,
+    } = req.body;
 
-    // // Creating our own digest
-    // // The format should be like this:
-    // // digest = hmac_sha256(orderCreationId + "|" + razorpayPaymentId, secret);
-    // const shasum = crypto.createHmac("sha256", "SeBUQOo8QEKEY75gqH36NX5E");
+    // Creating our own digest
+    // The format should be like this:
+    // digest = hmac_sha256(orderCreationId + "|" + razorpayPaymentId, secret);
+    const shasum = crypto.createHmac("sha256", "SeBUQOo8QEKEY75gqH36NX5E");
 
-    // shasum.update(`${orderCreationId}|${razorpayPaymentId}`);
+    shasum.update(`${orderCreationId}|${razorpayPaymentId}`);
 
-    // const digest = shasum.digest("hex");
+    const digest = shasum.digest("hex");
 
-    // // comaparing our digest with the actual signature
-    // if (digest !== razorpaySignature)
-    //   return res.status(400).json({ msg: "Transaction not legit!" });
+    // comaparing our digest with the actual signature
+    if (digest !== razorpaySignature)
+      return res.status(400).json({ msg: "Transaction not legit!" });
 
-    // // THE PAYMENT IS LEGIT & VERIFIED
-    // // YOU CAN SAVE THE DETAILS IN YOUR DATABASE IF YOU WANT
+    // THE PAYMENT IS LEGIT & VERIFIED
+    // YOU CAN SAVE THE DETAILS IN YOUR DATABASE IF YOU WANT
     
-    // await Transaction.update(
-    //   { status: "completed", razorpayPaymentId },
-    //   { where: { orderId: orderCreationId } }
-    // );
-    // const transaction = await Transaction.findOne({
-    //   where: { orderId: orderCreationId },
-    // });
+    await Transaction.update(
+      { status: "completed", razorpayPaymentId },
+      { where: { orderId: orderCreationId } }
+    );
+    const transaction = await Transaction.findOne({
+      where: { orderId: orderCreationId },
+    });
 
-    // const customer = await Customer.findOne({
-    //   where: { id: transaction.customerId },
-    // });
+    const customer = await Customer.findOne({
+      where: { id: transaction.customerId },
+    });
 
-    // await TempSubscription.update(
-    //   { orderId: orderCreationId, status: 'active' },
-    //   { where: { orderId: orderCreationId } }
-    // );
-    // const tempSub = await TempSubscription.findOne({
-    //   where: { orderId: orderCreationId }
-    // });
-    // logger.info(" tempSub ", tempSub);
-    // // get address details
-    // const address = await Address.findOne({ where: { id: tempSub.addressId } });
-    // logger.info(" address ", address);
-    // // getb box details
-    // const box = await MealBox.findOne({ where: { id: tempSub.boxId } });
-    // logger.info(" box ", box);
+    await TempSubscription.update(
+      { orderId: orderCreationId, status: 'active' },
+      { where: { orderId: orderCreationId } }
+    );
+    const tempSub = await TempSubscription.findOne({
+      where: { orderId: orderCreationId }
+    });
+    logger.info(" tempSub ", tempSub);
+    // get address details
+    const address = await Address.findOne({ where: { id: tempSub.addressId } });
+    logger.info(" address ", address);
+    // getb box details
+    const box = await MealBox.findOne({ where: { id: tempSub.boxId } });
+    logger.info(" box ", box);
 
-    // const {
-    //   amount,
-    //   weekendType,
-    //   status,
-    //   boxId,
-    //   itemNames,
-    //   subscriptionType,
-    //   dietType,
-    //   deliveryType,
-    //   startDate,
-    //   endDate,
-    //   customerId,
-    //   itemCode,
-    //   orderId,
-    //   selectedDates
-    // } = tempSub
+    const {
+      amount,
+      weekendType,
+      status,
+      boxId,
+      itemNames,
+      subscriptionType,
+      dietType,
+      deliveryType,
+      startDate,
+      endDate,
+      customerId,
+      itemCode,
+      orderId,
+      selectedDates
+    } = tempSub
 
-    // const subscription = await Subscription.create({
-    //   amount,
-    //   weekendType,
-    //   status,
-    //   boxId,
-    //   itemNames,
-    //   subscriptionType,
-    //   deliveryType,
-    //   dietType,
-    //   startDate: convertToUTC(startDate),
-    //   endDate: convertToUTC(endDate),
-    //   customerId,
-    //   itemCode,
-    //   orderId,
-    //   cuisineChoice: tempSub.cuisineChoice,
-    //   selectedDates,
-    //   transactionId: transaction.id,
-    //   addressId: tempSub.addressId
-    // });
+    const subscription = await Subscription.create({
+      amount,
+      weekendType,
+      status,
+      boxId,
+      itemNames,
+      subscriptionType,
+      deliveryType,
+      dietType,
+      startDate: convertToUTC(startDate),
+      endDate: convertToUTC(endDate),
+      customerId,
+      itemCode,
+      orderId,
+      cuisineChoice: tempSub.cuisineChoice,
+      selectedDates,
+      transactionId: transaction.id,
+      addressId: tempSub.addressId
+    });
 
-    // await Customer.update({ wallet: customer.wallet - transaction.walletAdjusted }, { where: { id: transaction.customerId } });
+    await Customer.update({ wallet: customer.wallet - transaction.walletAdjusted }, { where: { id: transaction.customerId } });
 
-    // // trigger the buy subscription flow here
-    // const cuisineChoice = tempSub.cuisineChoice;
-    // let choicesAvailable = false;
-    // console.log(" cuisineChoice ", cuisineChoice);
-    // const list = new CircularLinkedList();
-    // console.log(" initial list ", list)
-    // if(cuisineChoice && cuisineChoice.length) {
-    //   // populate the linkedlist
-    //   for(let i = 0; i < cuisineChoice.length; i++) { 
-    //     list.append(cuisineChoice[i]);
-    //   }
-    //   choicesAvailable = true;
-    // }
-    // logger.info(" list ", list);
+    // trigger the buy subscription flow here
+    const cuisineChoice = tempSub.cuisineChoice;
+    let choicesAvailable = false;
+    console.log(" cuisineChoice ", cuisineChoice);
+    const list = new CircularLinkedList();
+    console.log(" initial list ", list)
+    if(cuisineChoice && cuisineChoice.length) {
+      // populate the linkedlist
+      for(let i = 0; i < cuisineChoice.length; i++) { 
+        list.append(cuisineChoice[i]);
+      }
+      choicesAvailable = true;
+    }
+    logger.info(" list ", list);
 
-    // // mail trigger logic
+    // mail trigger logic
     // const transporter = nodemailer.createTransport({
     //   service: "gmail", // Use your email service (e.g., Gmail, Outlook, etc.)
     //   auth: {
@@ -369,36 +369,36 @@ paymentSuccess = async (req, res, next) => {
     // }
 
     // transporter.sendMail(toOptions);
-    // // mail logic ends
+    // mail logic ends
 
-    // // new logic of creating orders with selected dates
-    // const dates = subscription.selectedDates;
+    // new logic of creating orders with selected dates
+    const dates = subscription.selectedDates;
 
-    // // loop through dates to create array of orders
-    // const orders = [];
-    // let currHead = list.head;
-    // for(let i = 0; i < dates.length; i++) {
-    //   const orderDate = new Date(dates[i]);
-    //     const currentChoice = choicesAvailable ? list.getCurrentValue(currHead) : null;
-    //     orders.push({
-    //       orderDate: orderDate,
-    //       boxId: boxId,
-    //       cuisineId: currentChoice,
-    //       customerId: subscription.customerId,
-    //       subscriptionId: subscription.id,
-    //       status: 'active'
-    //     });
-    //     if(choicesAvailable) {
-    //       currHead = currHead.next;
-    //     }
-    // }
-    // // bulk create Orders
-    // await Order.bulkCreate(orders);
-    // return res.status(200).json({
-    //   success: true,
-    //   message: "Subscription created successfully",
-    //   data: subscription,
-    // });
+    // loop through dates to create array of orders
+    const orders = [];
+    let currHead = list.head;
+    for(let i = 0; i < dates.length; i++) {
+      const orderDate = new Date(dates[i]);
+        const currentChoice = choicesAvailable ? list.getCurrentValue(currHead) : null;
+        orders.push({
+          orderDate: orderDate,
+          boxId: boxId,
+          cuisineId: currentChoice,
+          customerId: subscription.customerId,
+          subscriptionId: subscription.id,
+          status: 'active'
+        });
+        if(choicesAvailable) {
+          currHead = currHead.next;
+        }
+    }
+    // bulk create Orders
+    await Order.bulkCreate(orders);
+    return res.status(200).json({
+      success: true,
+      message: "Subscription created successfully",
+      data: subscription,
+    });
 
     // -> logic ends here
   } catch (error) {
