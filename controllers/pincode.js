@@ -38,11 +38,11 @@ list = async (req, res, next) => {
   console.log(" limit ", limit);
   console.log("offset", offset)
   const  whereCondition = {
-    isDeleted: false
+    isDeleted: false,
   }
   if(code) {
     whereCondition.code = { 
-      [Sequelize.Op.like]: `%${code}%`
+      [Sequelize.Op.like]: `%${String(code)}%`
     }
   }
 	const pincodes = await Pincode.findAll({ where: whereCondition, limit, offset, order: [["code", "ASC"]] });

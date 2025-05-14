@@ -7,6 +7,7 @@ const { SMS_API_URL } = require("../constants");
 const { verify } = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
 const { generateJwtToken } = require("../utils/authorization");
+const sequelize = require("../db/sequelize");
 
 // to get pagination information
 getPagination = (page, size) => {
@@ -50,35 +51,71 @@ create = async (req, res, next) => {
 list = async (req, res, next) => {
   try {
     const { page, size, search } = req.query;
-    console.log(" page ", page, size);
     const { limit, offset } = getPagination(page, size);
-    console.log(" limit ", limit);
-    console.log("offset", offset);
-    const whereCondition = {}
-    if (search) {
-      whereCondition[Sequelize.Op.or] = [
-        { firstName: { [Sequelize.Op.like]: `%${search}%` } },
-        { lastName: { [Sequelize.Op.like]: `%${search}%` } },
-      ]
-    }
-  
-    const customers = await Customer.findAll({ where: whereCondition, limit, offset, order: [['createdAt', 'DESC']] });
-    const totalCustomers = await Customer.count();
-    logger.info("Fetched customes list from admin");
+
+    const searchTerm = String(search || '').trim();
+
+    // Raw SQL query builder
+    const buildSearchQuery = ({ searchTerm, limit = 10, offset = 0 }) => {
+      const safeTerm = searchTerm.replace(/'/g, "''");
+      const likePattern = `%${safeTerm}%`;
+      const searchableFields = ['phoneNumber', 'firstName', 'lastName', 'email'];
+
+      const whereClause = searchableFields
+        .map(field => `${field} LIKE '${likePattern}'`)
+        .join(' OR ');
+
+      const sql = `
+        SELECT *
+        FROM customers
+        ${searchTerm ? `WHERE ${whereClause}` : ''}
+        ORDER BY createdAt DESC
+        LIMIT ${limit}
+        OFFSET ${offset};
+      `;
+      return sql;
+    };
+
+    const buildCountQuery = (searchTerm) => {
+      const safeTerm = searchTerm.replace(/'/g, "''");
+      const likePattern = `%${safeTerm}%`;
+      const searchableFields = ['phoneNumber', 'firstName', 'lastName', 'email'];
+
+      const whereClause = searchableFields
+        .map(field => `${field} LIKE '${likePattern}'`)
+        .join(' OR ');
+
+      return `
+        SELECT COUNT(*) AS count
+        FROM customers
+        ${searchTerm ? `WHERE ${whereClause}` : ''};
+      `;
+    };
+
+    const sqlQuery = buildSearchQuery({ searchTerm, limit, offset });
+    const countQuery = buildCountQuery(searchTerm);
+
+    const [sequelizeCustomers, countResult] = await Promise.all([
+      sequelize.query(sqlQuery, { type: Sequelize.QueryTypes.SELECT }),
+      sequelize.query(countQuery, { type: Sequelize.QueryTypes.SELECT })
+    ]);
+
+    const totalCustomers = countResult[0]?.count || 0;
 
     res.status(200).json({
       success: true,
-      customers,
+      customers: sequelizeCustomers,
       count: totalCustomers,
       currentPage: page ? +page : 0,
       totalPages: Math.ceil(totalCustomers / limit),
     });
-  }
-  catch (e) {
-    logger.error(`Error for customers list  ${e.message}`);
-    next(e);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
+
 
 getCustomerDetails = async (req, res, next) => {
   try {

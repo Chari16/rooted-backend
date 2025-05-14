@@ -28,17 +28,17 @@ list = async (req, res, next) => {
   const { limit, offset } = getPagination(page, size);
   console.log(" limit ", limit);
   console.log("offset", offset);
-  const whereCondition = {
+  let whereCondition = {
   };
   if(search) {
     whereCondition = {
       code: {
-        [Sequelize.Op.like]: `%${search}%`
+        [Sequelize.Op.like]: `%${String(search)}%`
       }
     }
   }
   const coupons = await Coupon.findAll({ where: whereCondition ,limit, offset, order: [["createdAt", "DESC"]] });
-  const totalCoupon = await Coupon.count();
+  const totalCoupon = await Coupon.count({ where: whereCondition });
   res.status(200).json({
     success: true,
     coupons,
