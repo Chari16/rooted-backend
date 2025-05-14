@@ -353,22 +353,22 @@ paymentSuccess = async (req, res, next) => {
     logger.info(" list ", list);
 
     // mail trigger logic
-    // const transporter = nodemailer.createTransport({
-    //   service: "gmail", // Use your email service (e.g., Gmail, Outlook, etc.)
-    //   auth: {
-    //     user: "reachout@rootedtoyou.com",
-    //     pass: "mrby fhmp tbrc jjow",
-    //   }
-    // });
+    const transporter = nodemailer.createTransport({
+      service: "gmail", // Use your email service (e.g., Gmail, Outlook, etc.)
+      auth: {
+        user: "reachout@rootedtoyou.com",
+        pass: "mrby fhmp tbrc jjow",
+      }
+    });
 
-    // const toOptions = {
-    //   from: "reachout@rootedtoyou.com", // Sender address
-    //   to: "reachout@rootedtoyou.com", // Recipient address
-    //   subject: SUBJECT.CORPORATE, // Subject line
-    //   text: subscriberTemplate(customer, address, subscription, box), // Plain text body
-    // }
+    const toOptions = {
+      from: "reachout@rootedtoyou.com", // Sender address
+      to: "reachout@rootedtoyou.com", // Recipient address
+      subject: SUBJECT.CORPORATE, // Subject line
+      text: subscriberTemplate(customer, address, subscription, box), // Plain text body
+    }
 
-    // transporter.sendMail(toOptions);
+    transporter.sendMail(toOptions);
     // mail logic ends
 
     // new logic of creating orders with selected dates
