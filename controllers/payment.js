@@ -11,6 +11,7 @@ const { checkHoliday, convertToUTC } = require("../utils/date");
 const Address = require("../models/address");
 const { subscriberTemplate } = require("../utils/mailTransporter");
 const { SUBJECT } = require("../constants");
+const logger = require("../logger");
 const Op = Sequelize.Op;
 
 // to get pagination information
@@ -245,6 +246,7 @@ createNewOrder = async (req, res, next) => {
 };
 
 paymentSuccess = async (req, res, next) => {
+  logger.info(" payment success block ", tempSub);
   try {
     // getting the details back from our font-end
     const {
@@ -288,14 +290,50 @@ paymentSuccess = async (req, res, next) => {
     const tempSub = await TempSubscription.findOne({
       where: { orderId: orderCreationId }
     });
-    console.log(" tempSub ", tempSub);
+    logger.info(" tempSub ", tempSub);
     // get address details
     const address = await Address.findOne({ where: { id: tempSub.addressId } });
+    logger.info(" address ", address);
     // getb box details
     const box = await MealBox.findOne({ where: { id: tempSub.boxId } });
+    logger.info(" box ", box);
 
-    const {amount, weekendType, status, boxId, itemNames, subscriptionType, dietType, deliveryType, startDate, endDate, customerId, itemCode, orderId, selectedDates  } = tempSub
-    const subscription = await Subscription.create({ amount, weekendType, status, boxId, itemNames, subscriptionType, deliveryType, dietType, startDate: convertToUTC(startDate), endDate: convertToUTC(endDate), customerId, itemCode, orderId, cuisineChoice: tempSub.cuisineChoice, selectedDates, transactionId: transaction.id, addressId: tempSub.addressId });
+    const {
+      amount,
+      weekendType,
+      status,
+      boxId,
+      itemNames,
+      subscriptionType,
+      dietType,
+      deliveryType,
+      startDate,
+      endDate,
+      customerId,
+      itemCode,
+      orderId,
+      selectedDates
+    } = tempSub
+
+    const subscription = await Subscription.create({
+      amount,
+      weekendType,
+      status,
+      boxId,
+      itemNames,
+      subscriptionType,
+      deliveryType,
+      dietType,
+      startDate: convertToUTC(startDate),
+      endDate: convertToUTC(endDate),
+      customerId,
+      itemCode,
+      orderId,
+      cuisineChoice: tempSub.cuisineChoice,
+      selectedDates,
+      transactionId: transaction.id,
+      addressId: tempSub.addressId
+    });
 
     await Customer.update({ wallet: customer.wallet - transaction.walletAdjusted }, { where: { id: transaction.customerId } });
 
@@ -312,7 +350,7 @@ paymentSuccess = async (req, res, next) => {
       }
       choicesAvailable = true;
     }
-    console.log(" list ", list);
+    logger.info(" list ", list);
 
     // mail trigger logic
     const transporter = nodemailer.createTransport({
@@ -364,7 +402,7 @@ paymentSuccess = async (req, res, next) => {
 
     // -> logic ends here
   } catch (error) {
-    console.log(" error ", error);
+    logger.info(" error ", error);
     res.status(500).send(error);
   }
 };
