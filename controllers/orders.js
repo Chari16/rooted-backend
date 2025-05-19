@@ -394,6 +394,8 @@ pauseOrder = async (req, res, next) => {
     const day = new Date(pauseDate).getDate();
     const startOfDay = new Date(Date.UTC(year, month, day, 0, 0, 0));
     const endOfDay = new Date(Date.UTC(year, month, day, 23, 59, 59));
+
+    // add check for order already paused or not
     const order = await Order.findOne({
       where: {
         subscriptionId,
@@ -413,6 +415,12 @@ pauseOrder = async (req, res, next) => {
         }
       ],
     });
+    if(order.status === 'paused') { 
+      return res.status(405).json({
+        success: false,
+        message: "Order already paused",
+      });
+    }
     console.log(" order ", order.subscription);
     const refund = calculateRefund(order.subscription.subscriptionType, order.subscription.amount);
     console.log(" refund ", refund.toFixed(2));
@@ -577,11 +585,33 @@ getTrialMeals = async(req, res, next) => {
   }
 }
 
+getPausedOrders = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const orders = await Order.findAll({
+      where: {
+        subscriptionId: id,
+        status: 'paused',
+      },
+      attributes: ['orderDate']
+    });
+    const pausedDates = orders.map(order => order.orderDate);
+
+    res.status(200).json({
+      success: true,
+      pausedDates,
+    });
+  } catch (e) {
+    next(e);
+  }
+}
+
 module.exports = {
   getOrders,
   getOrdersList,
   getKitchenSchedule,
   pauseOrder,
   downloadOrdersExcel,
-  getTrialMeals
+  getTrialMeals,
+  getPausedOrders
 };

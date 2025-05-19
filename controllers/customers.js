@@ -3,7 +3,7 @@ const { Sequelize, where } = require("sequelize");
 const axios = require("axios");
 const User = require("../models/user");
 const Customer = require("../models/customer");
-const { SMS_API_URL } = require("../constants");
+const { SMS_API_URL, ROLE_TYPE } = require("../constants");
 const { verify } = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
 const { generateJwtToken } = require("../utils/authorization");
@@ -301,7 +301,7 @@ googleLogin = async (req, res, next) => {
         status: "active",
         wallet: 0,
       });
-      const token = await generateJwtToken(newCustomer);
+      const token = await generateJwtToken(newCustomer, ROLE_TYPE.USER);
       res.status(200).json({
         success: true,
         message: "Google login success with new customer",
@@ -311,7 +311,7 @@ googleLogin = async (req, res, next) => {
     }
     else {
       // generate jwt token
-      const jwtToken = await generateJwtToken(customer);
+      const jwtToken = await generateJwtToken(customer, ROLE_TYPE.USER);
       res.status(200).json({
         success: true,
         message: "Google login success",
@@ -347,7 +347,7 @@ facebookLogin = async (req, res, next) => {
         status: "active",
         wallet: 0,
       });
-      const token = await generateJwtToken(newCustomer);
+      const token = await generateJwtToken(newCustomer, ROLE_TYPE.USER);
       res.status(200).json({
         success: true,
         message: "Facebook login success with new customer",
@@ -356,7 +356,7 @@ facebookLogin = async (req, res, next) => {
       });
     }
     // generate jwt token
-    const token = await generateJwtToken(customer);
+    const token = await generateJwtToken(customer, ROLE_TYPE.USER);
     res.status(200).json({
       success: true,
       message: "Facebook login success",
@@ -400,7 +400,7 @@ verifyOtp = async (req, res, next) => {
     delete customerData.otp;
 
     // generate jwt token
-    const token = await generateJwtToken(customer);
+    const token = await generateJwtToken(customer, ROLE_TYPE.USER);
 
     res.status(200).json({
       success: true,

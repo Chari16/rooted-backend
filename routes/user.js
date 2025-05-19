@@ -3,12 +3,12 @@ const userController = require('../controllers/user');
 const auth = require('../middlewares/auth');
  
 const router = express.Router()
-
-router.post('/create', userController.create)
+// admin routes
+router.post('/create',auth, userController.create)
 router.get('/list', auth, userController.list)
-router.delete('/:id', userController.deleteUser)
-router.get('/:id', userController.getUserDetails)
-router.put('/:id', userController.updateUserDetails)
+router.delete('/:id',auth, userController.deleteUser)
+router.get('/:id',auth, userController.getUserDetails)
+router.put('/:id',auth, userController.updateUserDetails)
 router.post('/register', userController.register)
 router.post('/login', userController.login)
 router.post('/admin/login', userController.adminLogin)

@@ -4,6 +4,7 @@ const Sequelize = require("sequelize");
 const Op = Sequelize.Op;
 const bcrypt = require("bcryptjs");
 const { generateJwtToken } = require("../utils/authorization");
+const { ROLE_TYPE } = require("../constants");
 
 register = async (req, res, next) => {
   try {
@@ -99,7 +100,7 @@ login = async (req, res, next) => {
     }
 
     // generate token
-    const token = await generateJwtToken(user);
+    const token = await generateJwtToken(user, ROLE_TYPE.ADMIN);
 
     res.status(200).json({
       success: true,
@@ -243,7 +244,7 @@ adminLogin = async (req, res, next) => {
     }
 
     // generate token
-    const token = await generateJwtToken(user);
+    const token = await generateJwtToken(user, ROLE_TYPE.ADMIN);
 
     res.status(200).json({
       success: true,

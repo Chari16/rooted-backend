@@ -1,12 +1,13 @@
 const express = require('express')
 const couponController = require('../controllers/coupon')
+const auth = require('../middlewares/auth')
  
 const router = express.Router()
 
-router.post('/create', couponController.create)
-router.get('/list', couponController.list)
-router.get('/:id', couponController.getCouponDetails)
-router.put('/:id', couponController.updateCouponDetails)
-router.post('/apply', couponController.applyCoupon)
+router.post('/create',auth, couponController.create)
+router.get('/list', auth, couponController.list)
+router.get('/:id', auth, couponController.getCouponDetails)
+router.put('/:id',auth, couponController.updateCouponDetails)
+router.post('/apply',auth, couponController.applyCoupon)
 
 module.exports = router;

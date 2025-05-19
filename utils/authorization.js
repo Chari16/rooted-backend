@@ -7,10 +7,10 @@ const config = require("../config");
  * @param user
  */
 
-const generateJwtToken = async (user) => {
+const generateJwtToken = async (user, role) => {
   const { secrets } = config;
   const { id } = user;
-  const token = jwt.sign({ id }, secrets.jwt, {
+  const token = jwt.sign({ id, role }, secrets.jwt, {
     expiresIn: secrets.jwtExp,
   });
   return token;
@@ -42,10 +42,10 @@ const verifyToken = (token) =>
   new Promise((resolve, reject) => {
     jwt.verify(token, config.secrets.jwt, (err, payload) => {
       if (err) {
-        console.log(" jwt err ", err);
+        // console.log(" jwt err ", err);
         return reject(err);
       }
-      console.log(" payload ", payload);
+      // console.log(" payload ", payload);
       resolve(payload);
     });
   });
@@ -53,6 +53,7 @@ const verifyToken = (token) =>
 const serializeUser = (user) => {
   return {
     id: user.id,
+    role: user.role,
   };
 };
 

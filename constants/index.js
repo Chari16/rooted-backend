@@ -41,6 +41,11 @@ const SUBJECT = {
   SUBSCRIPTION: "New Subscription confirmed"
 }
 
+const ROLE_TYPE = {
+  ADMIN: "admin",
+  USER: "user",
+}
+
 module.exports = {
   API_VERSION,
   DIET_TYPE,
@@ -49,5 +54,6 @@ module.exports = {
   LOGIN_TYPE,
   SMS_API_URL,
   DISCOUNT_TYPE,
-  SUBJECT
+  SUBJECT,
+  ROLE_TYPE
 };
