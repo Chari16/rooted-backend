@@ -476,8 +476,8 @@ sendMail = async (req, res, next) => {
     });
 
     const toOptions = {
-      from: "bizdev@rootedtoyou.com", // Sender address
-      to: "bizdev@rootedtoyou.com", // Recipient address
+      from: "reachout@rootedtoyou.com", // Sender address
+      to: "reachout@rootedtoyou.com", // Recipient address
       subject: SUBJECT.CORPORATE, // Subject line
       text: corporateTemplate(payload), // Plain text body
     }
