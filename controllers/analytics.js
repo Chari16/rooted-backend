@@ -443,7 +443,8 @@ sendMail = async (req, res, next) => {
       service: "gmail", // Use your email service (e.g., Gmail, Outlook, etc.)
       auth: {
         user: "reachout@rootedtoyou.com",
-        pass: "mrby fhmp tbrc jjow",
+        // pass: "mrby fhmp tbrc jjow",
+        pass: "qnpw ekof znxm wyba"
       }
     });
     const toOptions = {
@@ -468,8 +469,9 @@ sendMail = async (req, res, next) => {
     const transporter = nodemailer.createTransport({
       service: "gmail", // Use your email service (e.g., Gmail, Outlook, etc.)
       auth: {
-        user: "bizdev@rootedtoyou.com", // Your email address
-        pass: "yczz joax astr ffxf", // Your email password or app-specific password
+        user: "reachout@rootedtoyou.com", // Your email address
+        // pass: "yczz joax astr ffxf", // Your email password or app-specific password
+        pass: "qnpw ekof znxm wyba"
       },
     });
 

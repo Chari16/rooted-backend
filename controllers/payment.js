@@ -357,7 +357,8 @@ paymentSuccess = async (req, res, next) => {
       service: "gmail", // Use your email service (e.g., Gmail, Outlook, etc.)
       auth: {
         user: "reachout@rootedtoyou.com",
-        pass: "mrby fhmp tbrc jjow",
+        // pass: "mrby fhmp tbrc jjow",
+        pass: "qnpw ekof znxm wyba"
       }
     });
 
