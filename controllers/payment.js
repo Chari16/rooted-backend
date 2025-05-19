@@ -365,7 +365,7 @@ paymentSuccess = async (req, res, next) => {
     const toOptions = {
       from: "reachout@rootedtoyou.com", // Sender address
       to: "reachout@rootedtoyou.com", // Recipient address
-      subject: SUBJECT.CORPORATE, // Subject line
+      subject: SUBJECT.SUBSCRIPTION, // Subject line
       text: subscriberTemplate(customer, address, subscription, box), // Plain text body
     }
 
