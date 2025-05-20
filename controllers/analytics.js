@@ -29,6 +29,7 @@ sales = async (req, res, next) => {
         createdAt: {
           [Sequelize.Op.between]: [start, end], // Filter by date range
         },
+        status: "completed"
       },
     }) || 0;
 
