@@ -11,6 +11,7 @@ sales = async (req, res, next) => {
   try {
 
     const start = new Date();
+    start.setHours(0, 0, 0, 0);
     const end = new Date();
     end.setHours(23, 59, 59, 999); // Set end date to the end of the day
     // const subs = await Subscription.findAll({
