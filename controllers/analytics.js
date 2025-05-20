@@ -45,6 +45,7 @@ sales = async (req, res, next) => {
         createdAt: {
           [Sequelize.Op.between]: [monthStart, monthEnd], // Filter by date range
         },
+        status: "completed"
       },
     }) || 0;
 
@@ -68,10 +69,14 @@ sales = async (req, res, next) => {
         createdAt: {
           [Sequelize.Op.between]: [startOfWeek, endOfWeek], // Filter by date range
         },
+        status: "completed"
       },
     }) || 0;
 
     const tillDateTotalSales = await Transaction.sum("amount", {
+      where: {
+        status: "completed"
+      },
     }) || 0;
 
     res.status(200).json({
